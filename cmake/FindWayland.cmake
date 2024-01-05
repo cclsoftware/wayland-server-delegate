@@ -98,37 +98,32 @@ if ("protocols" IN_LIST Wayland_FIND_COMPONENTS)
 
 	# Generate extra protocol headers
 
-	find_path (XDG_DIR NAMES "stable/xdg-shell/xdg-shell.xml" HINTS "/usr/share/wayland-protocols")
-	mark_as_advanced (XDG_DIR)
+	find_path (WAYLAND_PROTOCOLS_BASEDIR NAMES "stable/xdg-shell/xdg-shell.xml" HINTS "/usr/share/wayland-protocols")
+	mark_as_advanced (WAYLAND_PROTOCOLS_BASEDIR)
 
-	set (protocols
+	list (APPEND WAYLAND_PROTOCOLS
 		"stable/xdg-shell/xdg-shell.xml"
-		"staging/xdg-activation/xdg-activation-v1.xml"
-		"unstable/xdg-output/xdg-output-unstable-v1.xml"
-		"unstable/xdg-decoration/xdg-decoration-unstable-v1.xml"
-		"unstable/xdg-foreign/xdg-foreign-unstable-v1.xml"
-		"unstable/xdg-foreign/xdg-foreign-unstable-v2.xml"
-		"unstable/text-input/text-input-unstable-v3.xml"
 	)
+	list (REMOVE_DUPLICATES WAYLAND_PROTOCOLS)
 
 	set (WAYLAND_PROTOCOLS_DIR "${CMAKE_CURRENT_BINARY_DIR}/wayland-protocols" CACHE PATH "Directory for generated wayland protocol headers and source files")
 	file (MAKE_DIRECTORY ${WAYLAND_PROTOCOLS_DIR})
 
-	foreach (protocol ${protocols})
+	foreach (protocol ${WAYLAND_PROTOCOLS})
 
 		get_filename_component (protocol_name "${protocol}" NAME_WLE)
 
 		# Generate client header
 		set (header "${WAYLAND_PROTOCOLS_DIR}/${protocol_name}-client-protocol.h")
-		if (NOT EXISTS "${XDG_DIR}/${protocol}")
+		if (NOT EXISTS "${WAYLAND_PROTOCOLS_BASEDIR}/${protocol}")
 			message (WARNING "Unknown Wayland protocol: ${protocol_name}")
 			file (WRITE "${header}" "")
 			continue ()
 		endif ()
 
 		add_custom_command (OUTPUT ${header}
-			COMMAND /bin/sh -c "${WAYLAND_SCANNER} client-header < ${XDG_DIR}/${protocol} > \"${header}\""
-			DEPENDS ${XDG_DIR}/${protocol}
+			COMMAND /bin/sh -c "${WAYLAND_SCANNER} client-header < ${WAYLAND_PROTOCOLS_BASEDIR}/${protocol} > \"${header}\""
+			DEPENDS ${WAYLAND_PROTOCOLS_BASEDIR}/${protocol}
 			VERBATIM USES_TERMINAL
 		)
 		list (APPEND protocol_headers ${header})
@@ -137,8 +132,8 @@ if ("protocols" IN_LIST Wayland_FIND_COMPONENTS)
 		set (header "${WAYLAND_PROTOCOLS_DIR}/${protocol_name}-server-protocol.h")
 
 		add_custom_command (OUTPUT ${header}
-			COMMAND /bin/sh -c "${WAYLAND_SCANNER} server-header < ${XDG_DIR}/${protocol} > \"${header}\""
-			DEPENDS ${XDG_DIR}/${protocol}
+			COMMAND /bin/sh -c "${WAYLAND_SCANNER} server-header < ${WAYLAND_PROTOCOLS_BASEDIR}/${protocol} > \"${header}\""
+			DEPENDS ${WAYLAND_PROTOCOLS_BASEDIR}/${protocol}
 			VERBATIM USES_TERMINAL
 		)
 		list (APPEND protocol_headers ${header})
@@ -146,8 +141,8 @@ if ("protocols" IN_LIST Wayland_FIND_COMPONENTS)
 		# Generate source file
 		set (sourcefile "${WAYLAND_PROTOCOLS_DIR}/${protocol_name}-protocol.c")
 		add_custom_command (OUTPUT ${sourcefile}
-			COMMAND /bin/sh -c "${WAYLAND_SCANNER} private-code < ${XDG_DIR}/${protocol} > \"${sourcefile}\""
-			DEPENDS ${XDG_DIR}/${protocol}
+			COMMAND /bin/sh -c "${WAYLAND_SCANNER} private-code < ${WAYLAND_PROTOCOLS_BASEDIR}/${protocol} > \"${sourcefile}\""
+			DEPENDS ${WAYLAND_PROTOCOLS_BASEDIR}/${protocol}
 			VERBATIM USES_TERMINAL
 		)
 		list (APPEND protocol_source_files "${sourcefile}")
