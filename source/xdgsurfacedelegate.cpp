@@ -246,7 +246,10 @@ XdgToplevelDelegate::XdgToplevelDelegate (xdg_surface* surface)
 	configure = onConfigure;
 	close = onClose;
 	configure_bounds = onConfigureBounds;
+
+	#ifdef XDG_TOPLEVEL_WM_CAPABILITIES_SINCE_VERSION
 	wm_capabilities = onWindowManagerCapabilities;
+	#endif
 
 	toplevel = xdg_surface_get_toplevel (surface);
 	if(toplevel != nullptr)
@@ -402,8 +405,10 @@ void XdgToplevelDelegate::onConfigureBounds (void* data, xdg_toplevel* xdg_tople
 
 void XdgToplevelDelegate::onWindowManagerCapabilities (void* data, xdg_toplevel* xdg_toplevel, wl_array* capabilities)
 {
+	#ifdef XDG_TOPLEVEL_WM_CAPABILITIES_SINCE_VERSION
 	XdgToplevelDelegate* This = static_cast<XdgToplevelDelegate*> (data);
 	xdg_toplevel_send_wm_capabilities (This->resourceHandle, capabilities);
+	#endif
 }
 
 //************************************************************************************************
