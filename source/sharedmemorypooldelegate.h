@@ -48,7 +48,7 @@ class SharedMemoryPoolDelegate: public WaylandResource,
 								public wl_shm_pool_interface
 {
 public:
-	SharedMemoryPoolDelegate (int32_t fd, int32_t size);
+	SharedMemoryPoolDelegate (wl_shm_pool* pool);
 	~SharedMemoryPoolDelegate ();
 
 	static void onDestroy (wl_client* client, wl_resource* resource);

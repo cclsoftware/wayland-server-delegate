@@ -46,10 +46,10 @@ using namespace WaylandServerDelegate;
 // XdgSurfaceDelegate
 //************************************************************************************************
 
-XdgSurfaceDelegate::XdgSurfaceDelegate (XdgWindowManagerDelegate* windowManager, WaylandResource* waylandSurfaceResource)
+XdgSurfaceDelegate::XdgSurfaceDelegate (XdgWindowManagerDelegate* windowManager, xdg_surface* surface)
 : WaylandResource (&::xdg_surface_interface, static_cast<xdg_surface_interface*> (this)),
   windowManager (windowManager),
-  surface (nullptr),
+  surface (surface),
   popup (nullptr),
   toplevel (nullptr)
 {
@@ -61,20 +61,18 @@ XdgSurfaceDelegate::XdgSurfaceDelegate (XdgWindowManagerDelegate* windowManager,
 
 	configure = onConfigure;
 
-	IWaylandClientContext* context = WaylandServer::instance ().getContext ();
-	xdg_wm_base* sessionWindowManager = context ? context->getWindowManager () : nullptr;
-	if(sessionWindowManager == nullptr)
-		return;
-	
-	wl_surface* waylandSurface = reinterpret_cast<wl_surface*> (waylandSurfaceResource->getProxy ());
-	if(waylandSurface == nullptr)
-		return;
-
-	surface = xdg_wm_base_get_xdg_surface (sessionWindowManager, waylandSurface);
 	if(surface)
 		xdg_surface_add_listener (surface, this, this);
 
 	setProxy (reinterpret_cast<wl_proxy*> (surface));
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////////////
+
+XdgSurfaceDelegate::~XdgSurfaceDelegate ()
+{
+	if(surface)
+		xdg_surface_destroy (surface);
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
@@ -172,6 +170,14 @@ XdgPopupDelegate::XdgPopupDelegate (xdg_surface* surface, xdg_surface* parent, x
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
+XdgPopupDelegate::~XdgPopupDelegate ()
+{
+	if(popup)
+		xdg_popup_destroy (popup);
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////////////
+
 void XdgPopupDelegate::onDestroy (wl_client* client, wl_resource* resource)
 {
 	WaylandResource::onDestroy (resource);
@@ -256,6 +262,14 @@ XdgToplevelDelegate::XdgToplevelDelegate (xdg_surface* surface)
 		xdg_toplevel_add_listener (toplevel, this, this);
 
 	setProxy (reinterpret_cast<wl_proxy*> (toplevel));
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////////////
+
+XdgToplevelDelegate::~XdgToplevelDelegate ()
+{
+	if(toplevel)
+		xdg_toplevel_destroy (toplevel);
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
@@ -415,8 +429,9 @@ void XdgToplevelDelegate::onWindowManagerCapabilities (void* data, xdg_toplevel*
 // XdgPositionerDelegate
 //************************************************************************************************
 
-XdgPositionerDelegate::XdgPositionerDelegate ()
-: WaylandResource (&::xdg_positioner_interface, static_cast<xdg_positioner_interface*> (this))
+XdgPositionerDelegate::XdgPositionerDelegate (xdg_positioner* positioner)
+: WaylandResource (&::xdg_positioner_interface, static_cast<xdg_positioner_interface*> (this)),
+  positioner (positioner)
 {
 	destroy = onDestroy;
 	set_size = setSize;
@@ -434,9 +449,15 @@ XdgPositionerDelegate::XdgPositionerDelegate ()
 	if(windowManager == nullptr)
 		return;
 
-	positioner = xdg_wm_base_create_positioner (windowManager);
-
 	setProxy (reinterpret_cast<wl_proxy*> (positioner));
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////////////
+
+XdgPositionerDelegate::~XdgPositionerDelegate ()
+{
+	if(positioner)
+		xdg_positioner_destroy (positioner);
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////

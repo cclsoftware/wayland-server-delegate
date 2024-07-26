@@ -39,6 +39,7 @@
 #include "surfacedelegate.h"
 #include "seatdelegates.h"
 #include "xdgsurfacedelegate.h"
+#include "dmabufferdelegate.h"
 #include "waylandserver.h"
 
 #include "wayland-server-delegate/iwaylandclientcontext.h"
@@ -69,11 +70,12 @@ void RegistryDelegate::startup ()
 	const WaylandServer& server = WaylandServer::instance ();
 	IWaylandClientContext* context = server.getContext ();
 
-	registerGlobal (reinterpret_cast<wl_proxy*> (context->getCompositor ()), &wl_compositor_interface, WAYLAND_COMPOSITOR_VERSION, nullptr, bindWaylandCompositor);
-	registerGlobal (reinterpret_cast<wl_proxy*> (context->getSubCompositor ()), &wl_subcompositor_interface, 1, nullptr, bindSubCompositor);
-	registerGlobal (reinterpret_cast<wl_proxy*> (context->getSharedMemory ()), &wl_shm_interface, 1, nullptr, bindSharedMemory);
-	registerGlobal (reinterpret_cast<wl_proxy*> (context->getWindowManager ()), &xdg_wm_base_interface, 5, nullptr, bindXdgWindowManager);
-	registerGlobal (reinterpret_cast<wl_proxy*> (context->getSeat ()), &wl_seat_interface, 8, nullptr, bindSeat);
+	registerGlobal (reinterpret_cast<wl_proxy*> (context->getCompositor ()), &wl_compositor_interface, CompositorDelegate::kMinVersion, nullptr, bindWaylandCompositor);
+	registerGlobal (reinterpret_cast<wl_proxy*> (context->getSubCompositor ()), &wl_subcompositor_interface, SubCompositorDelegate::kMinVersion, nullptr, bindSubCompositor);
+	registerGlobal (reinterpret_cast<wl_proxy*> (context->getSharedMemory ()), &wl_shm_interface, SharedMemoryDelegate::kMinVersion, nullptr, bindSharedMemory);
+	registerGlobal (reinterpret_cast<wl_proxy*> (context->getWindowManager ()), &xdg_wm_base_interface, XdgWindowManagerDelegate::kMinVersion, nullptr, bindXdgWindowManager);
+	registerGlobal (reinterpret_cast<wl_proxy*> (context->getSeat ()), &wl_seat_interface, SeatDelegate::kMinVersion, nullptr, bindSeat);
+	registerGlobal (reinterpret_cast<wl_proxy*> (context->getDmaBuffer ()), &zwp_linux_dmabuf_v1_interface, DmaBufferDelegate::kMinVersion, nullptr, bindDmaBuffer);
 	
 	updateOutputs ();
 
@@ -96,6 +98,7 @@ void RegistryDelegate::shutdown ()
 			wl_global_destroy (global.second);
 	}
 	globals.clear ();
+	outputs.clear ();
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
@@ -166,7 +169,7 @@ void RegistryDelegate::updateOutputs ()
 	{
 		wl_proxy* proxy = reinterpret_cast<wl_proxy*> (context->getOutput (addedOutputIndex).handle);
 		uint32_t id = wl_proxy_get_id (proxy);
-		registerGlobal (id, &wl_output_interface, 3, reinterpret_cast<void*> (int64_t(addedOutputIndex)), bindOutput);
+		registerGlobal (id, &wl_output_interface, OutputDelegate::kMinVersion, reinterpret_cast<void*> (int64_t(addedOutputIndex)), bindOutput);
 	}
 
 	outputs = newOutputs;
@@ -322,6 +325,22 @@ void RegistryDelegate::bindSeat (wl_client* client, void* data, uint32_t version
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
+void RegistryDelegate::bindDmaBuffer (wl_client* client, void* data, uint32_t version, uint32_t id)
+{
+	uint32_t selectedVersion = std::min<uint32_t> (DmaBufferDelegate::kMinVersion, version);
+
+	if(selectedVersion < DmaBufferDelegate::kMinVersion)
+	{
+		sendInvalidVersion (client, zwp_linux_dmabuf_v1_interface.name, DmaBufferDelegate::kMinVersion);
+		return;
+	}
+	
+	DmaBufferDelegate* implementation = new DmaBufferDelegate;
+	instance ().bind (implementation, client, selectedVersion, id);
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////////////
+
 void RegistryDelegate::bindOutput (wl_client* client, void* data, uint32_t version, uint32_t id)
 {
 	uint32_t selectedVersion = std::min<uint32_t> (3, version);
@@ -363,6 +382,11 @@ CompositorDelegate::CompositorDelegate ()
 {
 	create_surface = onCreateSurface;
 	create_region = onCreateRegion;
+
+	IWaylandClientContext* context = WaylandServer::instance ().getContext ();
+	setProxy (reinterpret_cast<wl_proxy*> (context ? context->getCompositor () : nullptr));
+	wrapProxy ();
+	compositor = reinterpret_cast<wl_compositor*> (proxyWrapper);
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
@@ -376,7 +400,12 @@ void CompositorDelegate::onCreateSurface (wl_client* client, wl_resource* resour
 		return;
 	}
 
-	WaylandResource* implementation = new SurfaceDelegate;
+	CompositorDelegate* This = cast<CompositorDelegate> (resource);
+	if(This->compositor == nullptr)
+		return;
+	
+	wl_surface* surface = wl_compositor_create_surface (This->compositor);
+	WaylandResource* implementation = new SurfaceDelegate (surface);
 	connection->addResource (implementation, id);
 }
 
@@ -391,7 +420,12 @@ void CompositorDelegate::onCreateRegion (wl_client* client, wl_resource* resourc
 		return;
 	}
 
-	WaylandResource* implementation = new RegionDelegate;
+	CompositorDelegate* This = cast<CompositorDelegate> (resource);
+	if(This->compositor == nullptr)
+		return;
+	
+	wl_region* region = wl_compositor_create_region (This->compositor);
+	WaylandResource* implementation = new RegionDelegate (region);
 	connection->addResource (implementation, id);
 }
 
@@ -404,6 +438,11 @@ SubCompositorDelegate::SubCompositorDelegate ()
 {
 	destroy = onDestroy;
 	get_subsurface = getSubsurface;
+
+	IWaylandClientContext* context = WaylandServer::instance ().getContext ();
+	setProxy (reinterpret_cast<wl_proxy*> (context ? context->getSubCompositor () : nullptr));
+	wrapProxy ();
+	subCompositor = reinterpret_cast<wl_subcompositor*> (proxyWrapper);
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
@@ -438,7 +477,15 @@ void SubCompositorDelegate::getSubsurface (wl_client* client, wl_resource* resou
 		return;
 	}
 
-	WaylandResource* implementation = new SubSurfaceDelegate (waylandSurfaceResource, parentSurfaceResource);
+	SubCompositorDelegate* This = cast<SubCompositorDelegate> (resource);
+	if(This->subCompositor == nullptr)
+		return;
+	
+	wl_surface* waylandSurface = reinterpret_cast<wl_surface*> (waylandSurfaceResource->getProxy ());
+	wl_surface* parentSurface = reinterpret_cast<wl_surface*> (parentSurfaceResource->getProxy ());
+	wl_subsurface* subSurface = wl_subcompositor_get_subsurface (This->subCompositor, waylandSurface, parentSurface);
+
+	WaylandResource* implementation = new SubSurfaceDelegate (subSurface);
 	connection->addResource (implementation, id);
 }
 
@@ -450,6 +497,11 @@ SharedMemoryDelegate::SharedMemoryDelegate ()
 : WaylandResource (&::wl_shm_interface, static_cast<wl_shm_interface*> (this))
 {
 	create_pool = createPool;
+
+	IWaylandClientContext* context = WaylandServer::instance ().getContext ();
+	setProxy (reinterpret_cast<wl_proxy*> (context ? context->getSharedMemory () : nullptr));
+	wrapProxy ();
+	shm = reinterpret_cast<wl_shm*> (proxyWrapper);
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
@@ -463,7 +515,13 @@ void SharedMemoryDelegate::createPool (wl_client* client, wl_resource* resource,
 		return;
 	}
 
-	WaylandResource* implementation = new SharedMemoryPoolDelegate (fd, size);
+	SharedMemoryDelegate* This = cast<SharedMemoryDelegate> (resource);
+	if(This->shm == nullptr)
+		return;
+	
+	wl_shm_pool* pool = wl_shm_create_pool (This->shm, fd, size);
+
+	WaylandResource* implementation = new SharedMemoryPoolDelegate (pool);
 	connection->addResource (implementation, id);
 }
 
@@ -481,9 +539,9 @@ SeatDelegate::SeatDelegate ()
 	get_touch = getTouch;
 
 	IWaylandClientContext* context = WaylandServer::instance ().getContext ();
-	seat = context->getSeat ();
-
-	setProxy (reinterpret_cast<wl_proxy*> (seat));
+	setProxy (reinterpret_cast<wl_proxy*> (context->getSeat ()));
+	wrapProxy ();
+	seat = reinterpret_cast<wl_seat*> (proxyWrapper);
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
@@ -601,12 +659,18 @@ void OutputDelegate::onRelease (wl_client* client, wl_resource* resource)
 //************************************************************************************************
 
 XdgWindowManagerDelegate::XdgWindowManagerDelegate ()
-: WaylandResource (&::xdg_wm_base_interface, static_cast<xdg_wm_base_interface*> (this))
+: WaylandResource (&::xdg_wm_base_interface, static_cast<xdg_wm_base_interface*> (this)),
+  windowManager (nullptr)
 {
 	destroy = onDestroy;
 	create_positioner = createPositioner;
 	get_xdg_surface = getXdgSurface;
 	pong = onPong;
+
+	IWaylandClientContext* context = WaylandServer::instance ().getContext ();
+	setProxy (reinterpret_cast<wl_proxy*> (context ? context->getWindowManager () : nullptr));
+	wrapProxy ();
+	windowManager = reinterpret_cast<xdg_wm_base*> (proxyWrapper);
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
@@ -635,7 +699,12 @@ void XdgWindowManagerDelegate::createPositioner (wl_client* client, wl_resource*
 		return;
 	}
 
-	WaylandResource* implementation = new XdgPositionerDelegate;
+	XdgWindowManagerDelegate* This = cast<XdgWindowManagerDelegate> (resource);
+	if(This->windowManager == nullptr)
+		return;
+
+	xdg_positioner* positioner = xdg_wm_base_create_positioner (This->windowManager);
+	WaylandResource* implementation = new XdgPositionerDelegate (positioner);
 	connection->addResource (implementation, id);
 }
 
@@ -657,10 +726,13 @@ void XdgWindowManagerDelegate::getXdgSurface (wl_client* client, wl_resource* re
 		return;
 	}
 
-	SurfaceDelegate* surfaceDelegate = cast<SurfaceDelegate> (waylandSurfaceResource->getResourceHandle ());
+	wl_surface* waylandSurface = reinterpret_cast<wl_surface*> (waylandSurfaceResource->getProxy ());
+	if(waylandSurface == nullptr)
+		return;
 
 	XdgWindowManagerDelegate* This = cast<XdgWindowManagerDelegate> (resource);
-	WaylandResource* implementation = new XdgSurfaceDelegate (This, surfaceDelegate);
+	xdg_surface* xdgSurface = xdg_wm_base_get_xdg_surface (This->windowManager, waylandSurface);
+	WaylandResource* implementation = new XdgSurfaceDelegate (This, xdgSurface);
 	connection->addResource (implementation, id);
 }
 

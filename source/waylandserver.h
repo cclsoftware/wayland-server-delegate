@@ -52,6 +52,8 @@ struct IWaylandClientContext;
 class WaylandServer: public IWaylandServer
 {
 public:
+	~WaylandServer ();
+
 	static WaylandServer& instance ();
 
 	struct ClientConnection
@@ -74,6 +76,7 @@ public:
 
 	IWaylandClientContext* getContext () const { return context; }
 	wl_display* getDisplay () const { return display; }
+	wl_event_queue* getQueue () const { return queue; }
 
 	wl_event_loop* getEventLoop () const { return serverEventLoop; }
 	void setEventLoop (wl_event_loop* eventLoop) { serverEventLoop = eventLoop; }
@@ -88,7 +91,7 @@ public:
 	const std::vector<ClientConnection>& getConnections () const { return connections; }
 
 	// IWaylandServer
-	int startup (IWaylandClientContext* context) override;
+	int startup (IWaylandClientContext* context, wl_event_queue* queue = nullptr) override;
 	void shutdown () override;
 	bool isStarted () const override { return initialized; }
 	void dispatch () override;
@@ -101,7 +104,9 @@ public:
 
 private:
 	IWaylandClientContext* context;
+	wl_display* contextDisplay;
 	wl_display* display;
+	wl_event_queue* queue;
 	wl_event_loop* serverEventLoop;
 	std::vector<ClientConnection> connections;
 	bool initialized;

@@ -51,7 +51,7 @@ class SurfaceDelegate: public WaylandResource,
 					   public wl_surface_listener
 {
 public:
-	SurfaceDelegate ();
+	SurfaceDelegate (wl_surface* surface);
 	~SurfaceDelegate ();
 
 	// interface
@@ -83,7 +83,7 @@ class SubSurfaceDelegate: public WaylandResource,
 						  public wl_subsurface_interface
 {
 public:
-	SubSurfaceDelegate (WaylandResource* waylandSurface, WaylandResource* parent);
+	SubSurfaceDelegate (wl_subsurface* subSurface);
 	~SubSurfaceDelegate ();
 
 	// interface

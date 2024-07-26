@@ -56,7 +56,8 @@ class XdgSurfaceDelegate: public WaylandResource,
 						  public xdg_surface_listener
 {
 public:
-	XdgSurfaceDelegate (XdgWindowManagerDelegate* windowManager, WaylandResource* waylandSurface);
+	XdgSurfaceDelegate (XdgWindowManagerDelegate* windowManager, xdg_surface* surface);
+	~XdgSurfaceDelegate ();
 
 	// interface
 	static void onDestroy (wl_client* client, wl_resource* resource);
@@ -85,6 +86,7 @@ class XdgPopupDelegate: public WaylandResource,
 {
 public:
 	XdgPopupDelegate (xdg_surface* surface, xdg_surface* parent, xdg_positioner* positioner);
+	~XdgPopupDelegate ();
 
 	// interface
 	static void onDestroy (wl_client* client, wl_resource* resource);
@@ -110,6 +112,7 @@ class XdgToplevelDelegate: public WaylandResource,
 {
 public:
 	XdgToplevelDelegate (xdg_surface* surface);
+	~XdgToplevelDelegate ();
 
 	// interface
 	static void onDestroy (wl_client* client, wl_resource* resource);
@@ -144,7 +147,8 @@ class XdgPositionerDelegate: public WaylandResource,
 							 public xdg_positioner_interface
 {
 public:
-	XdgPositionerDelegate ();
+	XdgPositionerDelegate (xdg_positioner* positioner);
+	~XdgPositionerDelegate ();
 
 	static void onDestroy (wl_client* client, wl_resource* resource);
 	static void setSize (wl_client* client, wl_resource* resource, int32_t width, int32_t height);

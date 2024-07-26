@@ -45,18 +45,13 @@ using namespace WaylandServerDelegate;
 // SharedMemoryPoolDelegate
 //************************************************************************************************
 
-SharedMemoryPoolDelegate::SharedMemoryPoolDelegate (int32_t fd, int32_t size)
+SharedMemoryPoolDelegate::SharedMemoryPoolDelegate (wl_shm_pool* pool)
 : WaylandResource (&::wl_shm_pool_interface, static_cast<wl_shm_pool_interface*> (this)),
-  pool (nullptr)
+  pool (pool)
 {
 	create_buffer = createBuffer;
 	destroy = onDestroy;
 	resize = onResize;
-
-	IWaylandClientContext* context = WaylandServer::instance ().getContext ();
-	wl_shm* shm = context ? context->getSharedMemory () : nullptr;
-	if(shm != nullptr)
-		pool = wl_shm_create_pool (shm, fd, size);
 
 	setProxy (reinterpret_cast<wl_proxy*> (pool));
 }
@@ -88,7 +83,8 @@ void SharedMemoryPoolDelegate::createBuffer (wl_client* client, wl_resource* poo
 		return;
 	}
 
-	BufferDelegate* delegate = new BufferDelegate (This->pool, offset, width, height, stride, format);
+	wl_buffer* buffer = wl_shm_pool_create_buffer (This->pool, offset, width, height, stride, format);
+	BufferDelegate* delegate = new BufferDelegate (buffer);
 	connection->addResource (delegate, id);
 }
 

@@ -37,6 +37,8 @@
 
 #include "wayland-server-delegate/waylandresource.h"
 
+#include <wayland-client.h>
+
 using namespace WaylandServerDelegate;
 
 //************************************************************************************************
@@ -47,7 +49,8 @@ WaylandResource::WaylandResource (const wl_interface* waylandInterface, void* im
 : resourceHandle (nullptr),
   waylandInterface (waylandInterface),
   clientHandle (nullptr),
-  proxy (nullptr),
+  proxyWrapper (nullptr),
+  originalProxy (nullptr),
   implementation (implementation)
 {}
 
@@ -58,11 +61,49 @@ WaylandResource::~WaylandResource ()
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
+void WaylandResource::wrapProxy ()
+{
+	if(proxyWrapper)
+		wl_proxy_wrapper_destroy (proxyWrapper);
+	proxyWrapper = nullptr;
+
+	wl_event_queue* queue = WaylandServer::instance ().getQueue ();
+	if(queue == nullptr)
+		return;
+
+	if(originalProxy)
+		proxyWrapper = static_cast<wl_proxy*> (wl_proxy_create_wrapper (originalProxy));
+	if(proxyWrapper)
+		wl_proxy_set_queue (proxyWrapper, queue);
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////////////
+
+void WaylandResource::assignQueue ()
+{
+	wl_event_queue* queue = WaylandServer::instance ().getQueue ();
+	if(originalProxy && queue)
+		wl_proxy_set_queue (originalProxy, queue);
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////////////
+
+void WaylandResource::setProxy (wl_proxy* object)
+{
+	originalProxy = object;
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////////////
+
 void WaylandResource::onDestroy (wl_resource* resource)
 {
 	WaylandResource* This = static_cast<WaylandResource*> (wl_resource_get_user_data (resource));
 	if(This)
 	{
+		if(This->proxyWrapper)
+			wl_proxy_wrapper_destroy (This->proxyWrapper);
+		This->proxyWrapper = nullptr;
+
 		wl_resource_set_user_data (resource, nullptr);
 		WaylandServer::ClientConnection* connection = WaylandServer::instance ().findClientConnection (This->clientHandle);
 		if(connection)

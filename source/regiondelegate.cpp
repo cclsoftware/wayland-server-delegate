@@ -46,18 +46,13 @@ using namespace WaylandServerDelegate;
 // RegionDelegate
 //************************************************************************************************
 
-RegionDelegate::RegionDelegate ()
+RegionDelegate::RegionDelegate (wl_region* region)
 : WaylandResource (&::wl_region_interface, static_cast<wl_region_interface*> (this)),
-  region (nullptr)
+  region (region)
 {
 	destroy = onDestroy;
 	add = onAdd;
 	subtract = onSubtract;
-
-	IWaylandClientContext* context = WaylandServer::instance ().getContext ();
-	wl_compositor* compositor = context ? context->getCompositor () : nullptr;
-	if(compositor != nullptr)
-		region = wl_compositor_create_region (compositor);
 
 	setProxy (reinterpret_cast<wl_proxy*> (region));
 }

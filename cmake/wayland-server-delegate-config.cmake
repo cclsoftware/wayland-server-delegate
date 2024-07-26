@@ -50,6 +50,8 @@ list (APPEND serverdelegate_source_files
 	${serverdelegate_dir}/source/bufferdelegate.h
 	${serverdelegate_dir}/source/callbackdelegate.cpp
 	${serverdelegate_dir}/source/callbackdelegate.h
+	${serverdelegate_dir}/source/dmabufferdelegate.cpp
+	${serverdelegate_dir}/source/dmabufferdelegate.h
 	${serverdelegate_dir}/source/regiondelegate.cpp
 	${serverdelegate_dir}/source/regiondelegate.h
 	${serverdelegate_dir}/source/registrydelegate.cpp

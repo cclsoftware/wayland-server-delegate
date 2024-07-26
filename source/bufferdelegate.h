@@ -51,7 +51,7 @@ class BufferDelegate: public WaylandResource,
 					  public wl_buffer_listener
 {
 public:
-	BufferDelegate (wl_shm_pool* pool, int32_t offset, int32_t width, int32_t height, int32_t stride, uint32_t format);
+	BufferDelegate (wl_buffer* buffer);
 	~BufferDelegate ();
 
 	// interface

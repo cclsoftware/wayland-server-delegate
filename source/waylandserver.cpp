@@ -60,6 +60,16 @@ IWaylandServer& IWaylandServer::instance ()
 //************************************************************************************************
 
 WaylandServer::WaylandServer ()
+: context (nullptr),
+  contextDisplay (nullptr),
+  display (nullptr),
+  queue (nullptr),
+  serverEventLoop (nullptr)
+{}
+
+//////////////////////////////////////////////////////////////////////////////////////////////////
+
+WaylandServer::~WaylandServer ()
 {}
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
@@ -72,7 +82,7 @@ WaylandServer& WaylandServer::instance ()
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
-int WaylandServer::startup (IWaylandClientContext* clientContext)
+int WaylandServer::startup (IWaylandClientContext* clientContext, wl_event_queue* eventQueue)
 {
 	context = clientContext;
 	if(context == nullptr)
@@ -86,6 +96,8 @@ int WaylandServer::startup (IWaylandClientContext* clientContext)
 	}
 	
 	serverEventLoop = wl_display_get_event_loop (display);
+
+	queue = eventQueue;
 
 	RegistryDelegate::instance ().startup ();
 
@@ -108,6 +120,7 @@ void WaylandServer::shutdown ()
 		wl_display_destroy (display);
 	}
 	display = nullptr;
+	queue = nullptr;
 
 	connections.clear ();
 	
@@ -204,8 +217,6 @@ wl_display* WaylandServer::openClientConnection ()
 		return nullptr;
 	}
 
-	//TODO wl_client_add_destroy_listener (connection.clientHandle, ...);
-
 	connections.push_back (connection);
 
 	flush ();
@@ -268,6 +279,9 @@ wl_proxy* WaylandServer::createProxy (wl_display* display, wl_proxy* object, Way
 	wl_event_loop_dispatch (serverEventLoop, 0);
 	
 	connection->addResource (implementation, wl_proxy_get_version (object), id);
+
+	implementation->setProxy (object);
+	implementation->wrapProxy ();
 
 	return result;
 }
@@ -362,7 +376,7 @@ WaylandResource* WaylandServer::ClientConnection::findResource (wl_proxy* proxy)
 		return nullptr;
 	for(WaylandResource* resource : resources)
 	{	
-		if(resource->getProxy () == proxy)
+		if(resource->getProxy () == proxy || resource->getOriginalProxy () == proxy)
 			return resource;
 	}
 	return nullptr;

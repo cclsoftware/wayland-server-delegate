@@ -72,6 +72,7 @@ public:
 	static void bindSubCompositor (wl_client* client, void* data, uint32_t version, uint32_t id);
 	static void bindSharedMemory (wl_client* client, void* data, uint32_t version, uint32_t id);
 	static void bindSeat (wl_client* client, void* data, uint32_t version, uint32_t id);
+	static void bindDmaBuffer (wl_client* client, void* data, uint32_t version, uint32_t id);
 	static void bindOutput (wl_client* client, void* data, uint32_t version, uint32_t id);
 	static void bindXdgWindowManager (wl_client* client, void* data, uint32_t version, uint32_t id);
 
@@ -107,6 +108,9 @@ public:
 	// interface
 	static void onCreateSurface (wl_client* client, wl_resource* resource, uint32_t id);
 	static void onCreateRegion (wl_client* client, wl_resource* resource, uint32_t id);
+
+private:
+	wl_compositor* compositor;
 };
 
 //************************************************************************************************
@@ -124,6 +128,9 @@ public:
 	// interface
 	static void onDestroy (wl_client* client, wl_resource* resource);
 	static void getSubsurface (wl_client* client, wl_resource* resource, uint32_t id, wl_resource* surface, wl_resource* parent);
+
+private:
+	wl_subcompositor* subCompositor;
 };
 
 //************************************************************************************************
@@ -140,6 +147,9 @@ public:
 
 	// interface
 	static void createPool (wl_client* client, wl_resource* resource,  uint32_t id, int32_t fd, int32_t size);
+
+private:
+	wl_shm* shm;
 };
 
 //************************************************************************************************
@@ -208,6 +218,9 @@ public:
 	static void createPositioner (wl_client* client, wl_resource* resource, uint32_t id);
 	static void getXdgSurface (wl_client* client, wl_resource* resource, uint32_t id, wl_resource* surface);
 	static void onPong (wl_client* client, wl_resource* resource, uint32_t serial);
+
+private:
+	xdg_wm_base* windowManager;
 };
 
 } // namespace WaylandServerDelegate

@@ -41,14 +41,13 @@ using namespace WaylandServerDelegate;
 // BufferDelegate
 //************************************************************************************************
 
-BufferDelegate::BufferDelegate (wl_shm_pool* pool, int32_t offset, int32_t width, int32_t height, int32_t stride, uint32_t format)
+BufferDelegate::BufferDelegate (wl_buffer* buffer)
 : WaylandResource (&::wl_buffer_interface, static_cast<wl_buffer_interface*> (this)),
-  buffer (nullptr)
+  buffer (buffer)
 {
 	destroy = onDestroy;
 	wl_buffer_listener::release = onRelease;
 
-	buffer = wl_shm_pool_create_buffer (pool, offset, width, height, stride, format);
 	if(buffer)
 		wl_buffer_add_listener (buffer, this, this);
 

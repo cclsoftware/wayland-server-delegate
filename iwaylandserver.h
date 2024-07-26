@@ -42,6 +42,7 @@ struct xdg_surface;
 struct xdg_toplevel;
 
 struct wl_proxy;
+struct wl_event_queue;
 
 namespace WaylandServerDelegate {
 
@@ -59,12 +60,15 @@ public:
 
 	/** Startup the Wayland server.
 	 * @param context a context instance representing the application's session compositor connection and related resources.
-	 * @return a file descriptor which should be added to the main event loop or -1 on failure.
-	 * The caller should poll for events using the returned file descriptor 
+	 * @param queue an optional event queue for server-side Wayland objects.
+	 * @return a file descriptor or -1 on failure.
+	 * The caller should poll for events using the returned file descriptor
 	 * and call IWaylandServer::dispatch when events are available.
+	 * This can be done in the main event loop or in a separate thread.
+	 * When using a separate thread, calls to other member functions need to be synchronized externally.
 	 * \a context must stay valid until the server is shut down.
 	 */
-	virtual int startup (IWaylandClientContext* context) = 0;
+	virtual int startup (IWaylandClientContext* context, wl_event_queue* queue = 0) = 0;
 
 	/** Shutdown the Wayland server. */
 	virtual void shutdown () = 0;

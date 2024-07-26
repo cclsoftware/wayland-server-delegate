@@ -51,6 +51,7 @@ CallbackDelegate::CallbackDelegate (wl_callback* callback)
 		wl_callback_add_listener (callback, this, this);
 
 	setProxy (reinterpret_cast<wl_proxy*> (callback));
+	assignQueue ();
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////

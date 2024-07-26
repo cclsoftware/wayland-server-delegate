@@ -103,6 +103,7 @@ if ("protocols" IN_LIST Wayland_FIND_COMPONENTS)
 
 	list (APPEND WAYLAND_PROTOCOLS
 		"stable/xdg-shell/xdg-shell.xml"
+		"stable/linux-dmabuf/linux-dmabuf-v1.xml"
 	)
 	list (REMOVE_DUPLICATES WAYLAND_PROTOCOLS)
 

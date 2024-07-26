@@ -48,7 +48,7 @@ class RegionDelegate: public WaylandResource,
 					  public wl_region_interface
 {
 public:
-	RegionDelegate ();
+	RegionDelegate (wl_region* region);
 	~RegionDelegate ();
 
 	// interface

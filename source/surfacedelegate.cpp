@@ -49,9 +49,9 @@ using namespace WaylandServerDelegate;
 // SurfaceDelegate
 //************************************************************************************************
 
-SurfaceDelegate::SurfaceDelegate ()
+SurfaceDelegate::SurfaceDelegate (wl_surface* surface)
 : WaylandResource (&::wl_surface_interface, static_cast<wl_surface_interface*> (this)),
-  surface (nullptr)
+  surface (surface)
 {
 	destroy = onDestroy;
 	attach = onAttach;
@@ -68,12 +68,6 @@ SurfaceDelegate::SurfaceDelegate ()
 	enter = onEnter;
 	leave = onLeave;
 
-	IWaylandClientContext* context = WaylandServer::instance ().getContext ();
-	wl_compositor* compositor = context ? context->getCompositor () : nullptr;
-	if(compositor == nullptr)
-		return;
-	
-	surface = wl_compositor_create_surface (compositor);
 	if(surface)
 		wl_surface_add_listener (surface, this, this);
 
@@ -150,7 +144,7 @@ void SurfaceDelegate::setInputRegion (wl_client* client, wl_resource* resource, 
 {
 	SurfaceDelegate* This = cast<SurfaceDelegate> (resource);
 	wl_region* regionHandle = castProxy<wl_region> (region);
-	if(This->surface && regionHandle)
+	if(This->surface)
 		wl_surface_set_input_region (This->surface, regionHandle);
 }
 
@@ -225,9 +219,9 @@ void SurfaceDelegate::onLeave (void* data, wl_surface* surface, wl_output* outpu
 // SubSurfaceDelegate
 //************************************************************************************************
 
-SubSurfaceDelegate::SubSurfaceDelegate (WaylandResource* surface, WaylandResource* parent)
+SubSurfaceDelegate::SubSurfaceDelegate (wl_subsurface* subSurface)
 : WaylandResource (&::wl_subsurface_interface, static_cast<wl_subsurface_interface*> (this)),
-  subSurface (nullptr)
+  subSurface (subSurface)
 {
 	destroy = onDestroy;
 	set_position = setPosition;
@@ -235,15 +229,6 @@ SubSurfaceDelegate::SubSurfaceDelegate (WaylandResource* surface, WaylandResourc
 	place_below = placeBelow;
 	set_sync = setSync;
 	set_desync = setDesync;
-
-	IWaylandClientContext* context = WaylandServer::instance ().getContext ();
-	wl_subcompositor* subCompositor = context ? context->getSubCompositor () : nullptr;
-	if(subCompositor == nullptr)
-		return;
-	
-	wl_surface* waylandSurface = reinterpret_cast<wl_surface*> (surface->getProxy ());
-	wl_surface* parentSurface = reinterpret_cast<wl_surface*> (parent->getProxy ());
-	subSurface = wl_subcompositor_get_subsurface (subCompositor, waylandSurface, parentSurface);
 
 	setProxy (reinterpret_cast<wl_proxy*> (subSurface));
 }

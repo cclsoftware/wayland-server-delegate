@@ -39,6 +39,7 @@
 #include <wayland-client.h>
 
 struct xdg_wm_base;
+struct zwp_linux_dmabuf_v1;
 
 namespace WaylandServerDelegate {
 
@@ -98,6 +99,7 @@ struct IWaylandClientContext
 	virtual wl_shm* getSharedMemory () const = 0;
 	virtual wl_seat* getSeat () const = 0;
 	virtual xdg_wm_base* getWindowManager () const = 0;
+	virtual zwp_linux_dmabuf_v1* getDmaBuffer () const = 0;
 
 	virtual uint32_t getSeatCapabilities () const = 0;
 	virtual const char* getSeatName () const = 0;

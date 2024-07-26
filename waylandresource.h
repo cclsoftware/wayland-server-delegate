@@ -58,14 +58,17 @@ public:
 	void setResourceHandle (wl_resource* resource) { resourceHandle = resource; }
 	wl_client* getClientHandle () const { return clientHandle; }
 	void setClientHandle (wl_client* client) { clientHandle = client; }
-	wl_proxy* getProxy () const { return proxy; }
-	void setProxy (wl_proxy* object) { proxy = object; }
+	wl_proxy* getProxy () const { return proxyWrapper ? proxyWrapper : originalProxy; }
+	wl_proxy* getOriginalProxy () const { return originalProxy; }
+	void setProxy (wl_proxy* object);
 
 	static void onDestroy (wl_resource* resource);
 
 	template<class T>
 	static T* cast (wl_resource* resource)
 	{
+		if(resource == nullptr)
+			return nullptr;
 		return static_cast<T*> (static_cast<WaylandResource*> (wl_resource_get_user_data (resource)));
 	}
 
@@ -78,12 +81,16 @@ public:
 		return reinterpret_cast<T*> (delegate->getProxy ());
 	}
 
+	void wrapProxy ();
+	void assignQueue ();
+
 protected:
 	const wl_interface* waylandInterface;
 	void* implementation;
 	wl_resource* resourceHandle;
 	wl_client* clientHandle;
-	wl_proxy* proxy;
+	wl_proxy* proxyWrapper;
+	wl_proxy* originalProxy;
 };
 
 } // namespace WaylandServerDelegate
