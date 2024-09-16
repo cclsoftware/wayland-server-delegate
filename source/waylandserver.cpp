@@ -84,6 +84,12 @@ WaylandServer& WaylandServer::instance ()
 
 int WaylandServer::startup (IWaylandClientContext* clientContext, wl_event_queue* eventQueue)
 {
+	if(initialized)
+	{
+		std::cerr << "Wayland server is already running." << std::endl;
+		return -1;
+	}
+
 	context = clientContext;
 	if(context == nullptr)
 		return -1;

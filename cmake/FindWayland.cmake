@@ -105,6 +105,9 @@ if ("protocols" IN_LIST Wayland_FIND_COMPONENTS)
 		"stable/xdg-shell/xdg-shell.xml"
 		"stable/linux-dmabuf/linux-dmabuf-v1.xml"
 	)
+	if (NOT EXISTS "${WAYLAND_PROTOCOLS_BASEDIR}/stable/linux-dmabuf/linux-dmabuf-v1.xml")
+		list (APPEND WAYLAND_PROTOCOLS "unstable/linux-dmabuf/linux-dmabuf-unstable-v1.xml")
+	endif ()
 	list (REMOVE_DUPLICATES WAYLAND_PROTOCOLS)
 
 	set (WAYLAND_PROTOCOLS_DIR "${CMAKE_CURRENT_BINARY_DIR}/wayland-protocols" CACHE PATH "Directory for generated wayland protocol headers and source files")
@@ -116,37 +119,41 @@ if ("protocols" IN_LIST Wayland_FIND_COMPONENTS)
 
 		# Generate client header
 		set (header "${WAYLAND_PROTOCOLS_DIR}/${protocol_name}-client-protocol.h")
-		if (NOT EXISTS "${WAYLAND_PROTOCOLS_BASEDIR}/${protocol}")
+		if (EXISTS "${WAYLAND_PROTOCOLS_BASEDIR}/${protocol}")
+			add_custom_command (OUTPUT ${header}
+				COMMAND /bin/sh -c "${WAYLAND_SCANNER} client-header < ${WAYLAND_PROTOCOLS_BASEDIR}/${protocol} > \"${header}\""
+				DEPENDS ${WAYLAND_PROTOCOLS_BASEDIR}/${protocol}
+				VERBATIM USES_TERMINAL
+			)
+		else ()
 			message (WARNING "Unknown Wayland protocol: ${protocol_name}")
 			file (WRITE "${header}" "")
-			continue ()
 		endif ()
-
-		add_custom_command (OUTPUT ${header}
-			COMMAND /bin/sh -c "${WAYLAND_SCANNER} client-header < ${WAYLAND_PROTOCOLS_BASEDIR}/${protocol} > \"${header}\""
-			DEPENDS ${WAYLAND_PROTOCOLS_BASEDIR}/${protocol}
-			VERBATIM USES_TERMINAL
-		)
 		list (APPEND protocol_headers ${header})
 
 		# Generate server header
 		set (header "${WAYLAND_PROTOCOLS_DIR}/${protocol_name}-server-protocol.h")
-
-		add_custom_command (OUTPUT ${header}
-			COMMAND /bin/sh -c "${WAYLAND_SCANNER} server-header < ${WAYLAND_PROTOCOLS_BASEDIR}/${protocol} > \"${header}\""
-			DEPENDS ${WAYLAND_PROTOCOLS_BASEDIR}/${protocol}
-			VERBATIM USES_TERMINAL
-		)
+		if (EXISTS "${WAYLAND_PROTOCOLS_BASEDIR}/${protocol}")
+			add_custom_command (OUTPUT ${header}
+				COMMAND /bin/sh -c "${WAYLAND_SCANNER} server-header < ${WAYLAND_PROTOCOLS_BASEDIR}/${protocol} > \"${header}\""
+				DEPENDS ${WAYLAND_PROTOCOLS_BASEDIR}/${protocol}
+				VERBATIM USES_TERMINAL
+			)
+		else ()
+			file (WRITE "${header}" "")
+		endif ()
 		list (APPEND protocol_headers ${header})
 
 		# Generate source file
-		set (sourcefile "${WAYLAND_PROTOCOLS_DIR}/${protocol_name}-protocol.c")
-		add_custom_command (OUTPUT ${sourcefile}
-			COMMAND /bin/sh -c "${WAYLAND_SCANNER} private-code < ${WAYLAND_PROTOCOLS_BASEDIR}/${protocol} > \"${sourcefile}\""
-			DEPENDS ${WAYLAND_PROTOCOLS_BASEDIR}/${protocol}
-			VERBATIM USES_TERMINAL
-		)
-		list (APPEND protocol_source_files "${sourcefile}")
+		if (EXISTS "${WAYLAND_PROTOCOLS_BASEDIR}/${protocol}")
+			set (sourcefile "${WAYLAND_PROTOCOLS_DIR}/${protocol_name}-protocol.c")
+			add_custom_command (OUTPUT ${sourcefile}
+				COMMAND /bin/sh -c "${WAYLAND_SCANNER} private-code < ${WAYLAND_PROTOCOLS_BASEDIR}/${protocol} > \"${sourcefile}\""
+				DEPENDS ${WAYLAND_PROTOCOLS_BASEDIR}/${protocol}
+				VERBATIM USES_TERMINAL
+			)
+			list (APPEND protocol_source_files "${sourcefile}")
+		endif ()
 	endforeach ()
 
 	add_library (wayland_protocols OBJECT ${protocol_headers} ${protocol_source_files} ${CMAKE_CURRENT_LIST_FILE})

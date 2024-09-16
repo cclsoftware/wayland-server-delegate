@@ -41,6 +41,11 @@
 #include "linux-dmabuf-v1-server-protocol.h"
 #include "linux-dmabuf-v1-client-protocol.h"
 
+#ifndef ZWP_LINUX_DMABUF_V1_DESTROY_SINCE_VERSION
+#include "linux-dmabuf-unstable-v1-server-protocol.h"
+#include "linux-dmabuf-unstable-v1-client-protocol.h"
+#endif
+
 namespace WaylandServerDelegate {
 
 //************************************************************************************************
