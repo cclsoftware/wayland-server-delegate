@@ -63,10 +63,16 @@ SurfaceDelegate::SurfaceDelegate (wl_surface* surface)
 	set_buffer_transform = setBufferTransform;
 	set_buffer_scale = setBufferScale;
 	damage_buffer = onDamageBuffer;
+	#ifdef WL_SURFACE_OFFSET_SINCE_VERSION
 	offset = setOffset;
+	#endif
 
 	enter = onEnter;
 	leave = onLeave;
+	#ifdef WL_SURFACE_PREFERRED_BUFFER_SCALE_SINCE_VERSION
+	preferred_buffer_scale = onPreferredBufferScale;
+	preferred_buffer_transform = onPreferredBufferTransform;
+	#endif
 
 	if(surface)
 		wl_surface_add_listener (surface, this, this);
@@ -188,9 +194,11 @@ void SurfaceDelegate::onDamageBuffer (wl_client* client, wl_resource* resource, 
 
 void SurfaceDelegate::setOffset (wl_client* client, wl_resource* resource, int32_t x, int32_t y)
 {
+	#ifdef WL_SURFACE_OFFSET_SINCE_VERSION
 	SurfaceDelegate* This = cast<SurfaceDelegate> (resource);
 	if(This->surface)
 		wl_surface_offset (This->surface, x, y);
+	#endif
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
@@ -213,6 +221,26 @@ void SurfaceDelegate::onLeave (void* data, wl_surface* surface, wl_output* outpu
 	WaylandResource* resource = server.findClientResource (This->clientHandle, reinterpret_cast<wl_proxy*> (output));
 	if(resource)
 		wl_surface_send_leave (This->getResourceHandle (), resource->getResourceHandle ());
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////////////
+
+void SurfaceDelegate::onPreferredBufferScale (void* data, wl_surface* surface, int32_t factor)
+{
+	#ifdef WL_SURFACE_PREFERRED_BUFFER_SCALE_SINCE_VERSION
+	SurfaceDelegate* This = static_cast<SurfaceDelegate*> (data);
+	wl_surface_send_preferred_buffer_scale (This->getResourceHandle (), factor);
+	#endif
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////////////
+
+void SurfaceDelegate::onPreferredBufferTransform (void* data, wl_surface* surface, uint32_t transform)
+{
+	#ifdef WL_SURFACE_PREFERRED_BUFFER_SCALE_SINCE_VERSION
+	SurfaceDelegate* This = static_cast<SurfaceDelegate*> (data);
+	wl_surface_send_preferred_buffer_transform (This->getResourceHandle (), transform);
+	#endif
 }
 
 //************************************************************************************************

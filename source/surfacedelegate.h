@@ -70,6 +70,8 @@ public:
 	// listener
 	static void onEnter (void* data, wl_surface* surface, wl_output* output);
 	static void onLeave (void* data, wl_surface* surface, wl_output* output);
+	static void onPreferredBufferScale (void* data, wl_surface* surface, int32_t factor);
+	static void onPreferredBufferTransform (void* data, wl_surface* surface, uint32_t transform);
 
 private:
 	wl_surface* surface;
