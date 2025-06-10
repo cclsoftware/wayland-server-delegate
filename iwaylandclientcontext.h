@@ -82,6 +82,8 @@ struct IContextListener
 		kOutputsChanged
 	};
 
+	virtual ~IContextListener () {}
+
 	virtual void contextChanged (ChangeType changeType) = 0;
 };
 
@@ -91,6 +93,8 @@ struct IContextListener
 
 struct IWaylandClientContext
 {
+	virtual ~IWaylandClientContext () {}
+
 	virtual bool addListener (IContextListener* listener) = 0;
 	virtual bool removeListener (IContextListener* listener) = 0;
 

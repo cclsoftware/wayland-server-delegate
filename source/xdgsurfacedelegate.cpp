@@ -421,7 +421,8 @@ void XdgToplevelDelegate::onWindowManagerCapabilities (void* data, xdg_toplevel*
 {
 	#ifdef XDG_TOPLEVEL_WM_CAPABILITIES_SINCE_VERSION
 	XdgToplevelDelegate* This = static_cast<XdgToplevelDelegate*> (data);
-	xdg_toplevel_send_wm_capabilities (This->resourceHandle, capabilities);
+	if(wl_resource_get_version (This->getResourceHandle ()) >= XDG_TOPLEVEL_WM_CAPABILITIES_SINCE_VERSION)
+		xdg_toplevel_send_wm_capabilities (This->resourceHandle, capabilities);
 	#endif
 }
 

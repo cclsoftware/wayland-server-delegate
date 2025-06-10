@@ -57,9 +57,9 @@ PointerDelegate::PointerDelegate (wl_seat* seat)
 	axis_source = onPointerAxisSource;
 	axis_stop = onPointerAxisStop;
 	axis_discrete = onPointerAxisDiscrete;
-#ifdef WL_POINTER_AXIS_VALUE120_SINCE_VERSION
+	#ifdef WL_POINTER_AXIS_VALUE120_SINCE_VERSION
 	axis_value120 = onPointerAxis120;
-#endif
+	#endif
 	frame = onPointerFrame;
 
 	set_cursor = setCursor;
@@ -171,10 +171,15 @@ void PointerDelegate::onPointerAxisDiscrete (void* data, wl_pointer* pointer, ui
 
 void PointerDelegate::onPointerAxis120 (void* data, wl_pointer* pointer, uint32_t axis, int32_t discrete)
 {
-#ifdef WL_POINTER_AXIS_VALUE120_SINCE_VERSION
+	#ifdef WL_POINTER_AXIS_VALUE120_SINCE_VERSION
 	PointerDelegate* This = static_cast<PointerDelegate*> (data);
-	wl_pointer_send_axis_value120 (This->getResourceHandle (), axis, discrete);
-#endif
+	if(wl_resource_get_version (This->getResourceHandle ()) >= WL_POINTER_AXIS_VALUE120_SINCE_VERSION)
+		wl_pointer_send_axis_value120 (This->getResourceHandle (), axis, discrete);
+	else
+	#endif
+	{
+		wl_pointer_send_axis_discrete (This->getResourceHandle (), axis, discrete / 120);
+	}
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////

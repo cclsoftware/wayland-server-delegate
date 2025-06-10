@@ -102,7 +102,20 @@ void SurfaceDelegate::onAttach (wl_client* client, wl_resource* resource, wl_res
 	SurfaceDelegate* This = cast<SurfaceDelegate> (resource);
 	wl_buffer* bufferHandle = castProxy<wl_buffer> (buffer);
 	if(This->surface && bufferHandle)
-		wl_surface_attach (This->surface, bufferHandle, x, y);
+	{
+		#if WL_SURFACE_OFFSET_SINCE_VERSION
+		if(wl_surface_get_version (This->surface) >= WL_SURFACE_OFFSET_SINCE_VERSION)
+		{
+			wl_surface_attach (This->surface, bufferHandle, 0, 0);
+			if(wl_resource_get_version (This->getResourceHandle ()) < WL_SURFACE_OFFSET_SINCE_VERSION)
+				wl_surface_offset (This->surface, x, y);
+		}
+		else
+		#endif
+		{
+			wl_surface_attach (This->surface, bufferHandle, x, y);
+		}
+	}
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
@@ -229,7 +242,8 @@ void SurfaceDelegate::onPreferredBufferScale (void* data, wl_surface* surface, i
 {
 	#ifdef WL_SURFACE_PREFERRED_BUFFER_SCALE_SINCE_VERSION
 	SurfaceDelegate* This = static_cast<SurfaceDelegate*> (data);
-	wl_surface_send_preferred_buffer_scale (This->getResourceHandle (), factor);
+	if(wl_resource_get_version (This->getResourceHandle ()) >= WL_SURFACE_PREFERRED_BUFFER_SCALE_SINCE_VERSION)
+		wl_surface_send_preferred_buffer_scale (This->getResourceHandle (), factor);
 	#endif
 }
 
@@ -237,9 +251,10 @@ void SurfaceDelegate::onPreferredBufferScale (void* data, wl_surface* surface, i
 
 void SurfaceDelegate::onPreferredBufferTransform (void* data, wl_surface* surface, uint32_t transform)
 {
-	#ifdef WL_SURFACE_PREFERRED_BUFFER_SCALE_SINCE_VERSION
+	#ifdef WL_SURFACE_PREFERRED_BUFFER_TRANSFORM_SINCE_VERSION
 	SurfaceDelegate* This = static_cast<SurfaceDelegate*> (data);
-	wl_surface_send_preferred_buffer_transform (This->getResourceHandle (), transform);
+	if(wl_resource_get_version (This->getResourceHandle ()) >= WL_SURFACE_PREFERRED_BUFFER_TRANSFORM_SINCE_VERSION)
+		wl_surface_send_preferred_buffer_transform (This->getResourceHandle (), transform);
 	#endif
 }
 

@@ -52,6 +52,12 @@
 #define WAYLAND_COMPOSITOR_VERSION WL_SURFACE_DAMAGE_BUFFER_SINCE_VERSION
 #endif
 
+#ifdef WL_POINTER_AXIS_VALUE120_SINCE_VERSION
+#define WAYLAND_POINTER_VERSION WL_POINTER_AXIS_VALUE120_SINCE_VERSION
+#else
+#define WAYLAND_POINTER_VERSION 7
+#endif
+
 namespace WaylandServerDelegate {
 
 //************************************************************************************************
@@ -87,7 +93,7 @@ private:
 
 	RegistryDelegate ();
 
-	wl_global* registerGlobal (wl_proxy* proxy, const wl_interface* interface, int version, void* data, wl_global_bind_func_t bindFunction);
+	wl_global* registerGlobal (wl_proxy* proxy, const wl_interface* interface, int maxVersion, void* data, wl_global_bind_func_t bindFunction);
 	wl_global* registerGlobal (uint32_t proxyId, const wl_interface* interface, int version, void* data, wl_global_bind_func_t bindFunction);
 	void unregisterGlobal (wl_global* global);
 
@@ -105,7 +111,8 @@ class CompositorDelegate: public WaylandResource,
 public:
 	CompositorDelegate ();
 
-	static const int kMinVersion = WAYLAND_COMPOSITOR_VERSION;
+	static const int kMinVersion = WL_SURFACE_DAMAGE_BUFFER_SINCE_VERSION;
+	static const int kMaxVersion = WAYLAND_COMPOSITOR_VERSION;
 
 	// interface
 	static void onCreateSurface (wl_client* client, wl_resource* resource, uint32_t id);
@@ -126,6 +133,7 @@ public:
 	SubCompositorDelegate ();
 
 	static const int kMinVersion = 1;
+	static const int kMaxVersion = 1;
 
 	// interface
 	static void onDestroy (wl_client* client, wl_resource* resource);
@@ -146,6 +154,7 @@ public:
 	SharedMemoryDelegate ();
 
 	static const int kMinVersion = 1;
+	static const int kMaxVersion = 1;
 
 	// interface
 	static void createPool (wl_client* client, wl_resource* resource,  uint32_t id, int32_t fd, int32_t size);
@@ -164,7 +173,8 @@ class SeatDelegate: public WaylandResource,
 public:
 	SeatDelegate ();
 
-	static const int kMinVersion = 8;
+	static const int kMinVersion = WL_POINTER_AXIS_DISCRETE_SINCE_VERSION;
+	static const int kMaxVersion = WAYLAND_POINTER_VERSION;
 
 	void sendCapabilities () const;
 	void sendName () const;
@@ -190,6 +200,7 @@ public:
 	OutputDelegate (int index = 0);
 
 	static const int kMinVersion = 3;
+	static const int kMaxVersion = 3;
 
 	void sendProperties () const;
 
@@ -211,7 +222,8 @@ class XdgWindowManagerDelegate: public WaylandResource,
 public:
 	XdgWindowManagerDelegate ();
 
-	static const int kMinVersion = 5;
+	static const int kMinVersion = 4;
+	static const int kMaxVersion = 7;
 
 	void sendPing ();
 

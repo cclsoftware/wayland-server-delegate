@@ -70,12 +70,12 @@ void RegistryDelegate::startup ()
 	const WaylandServer& server = WaylandServer::instance ();
 	IWaylandClientContext* context = server.getContext ();
 
-	registerGlobal (reinterpret_cast<wl_proxy*> (context->getCompositor ()), &wl_compositor_interface, CompositorDelegate::kMinVersion, nullptr, bindWaylandCompositor);
-	registerGlobal (reinterpret_cast<wl_proxy*> (context->getSubCompositor ()), &wl_subcompositor_interface, SubCompositorDelegate::kMinVersion, nullptr, bindSubCompositor);
-	registerGlobal (reinterpret_cast<wl_proxy*> (context->getSharedMemory ()), &wl_shm_interface, SharedMemoryDelegate::kMinVersion, nullptr, bindSharedMemory);
-	registerGlobal (reinterpret_cast<wl_proxy*> (context->getWindowManager ()), &xdg_wm_base_interface, XdgWindowManagerDelegate::kMinVersion, nullptr, bindXdgWindowManager);
-	registerGlobal (reinterpret_cast<wl_proxy*> (context->getSeat ()), &wl_seat_interface, SeatDelegate::kMinVersion, nullptr, bindSeat);
-	registerGlobal (reinterpret_cast<wl_proxy*> (context->getDmaBuffer ()), &zwp_linux_dmabuf_v1_interface, DmaBufferDelegate::kMinVersion, nullptr, bindDmaBuffer);
+	registerGlobal (reinterpret_cast<wl_proxy*> (context->getCompositor ()), &wl_compositor_interface, CompositorDelegate::kMaxVersion, nullptr, bindWaylandCompositor);
+	registerGlobal (reinterpret_cast<wl_proxy*> (context->getSubCompositor ()), &wl_subcompositor_interface, SubCompositorDelegate::kMaxVersion, nullptr, bindSubCompositor);
+	registerGlobal (reinterpret_cast<wl_proxy*> (context->getSharedMemory ()), &wl_shm_interface, SharedMemoryDelegate::kMaxVersion, nullptr, bindSharedMemory);
+	registerGlobal (reinterpret_cast<wl_proxy*> (context->getWindowManager ()), &xdg_wm_base_interface, XdgWindowManagerDelegate::kMaxVersion, nullptr, bindXdgWindowManager);
+	registerGlobal (reinterpret_cast<wl_proxy*> (context->getSeat ()), &wl_seat_interface, SeatDelegate::kMaxVersion, nullptr, bindSeat);
+	registerGlobal (reinterpret_cast<wl_proxy*> (context->getDmaBuffer ()), &zwp_linux_dmabuf_v1_interface, DmaBufferDelegate::kMaxVersion, nullptr, bindDmaBuffer);
 	
 	updateOutputs ();
 
@@ -169,7 +169,7 @@ void RegistryDelegate::updateOutputs ()
 	{
 		wl_proxy* proxy = reinterpret_cast<wl_proxy*> (context->getOutput (addedOutputIndex).handle);
 		uint32_t id = wl_proxy_get_id (proxy);
-		registerGlobal (id, &wl_output_interface, OutputDelegate::kMinVersion, reinterpret_cast<void*> (int64_t(addedOutputIndex)), bindOutput);
+		registerGlobal (id, &wl_output_interface, OutputDelegate::kMaxVersion, reinterpret_cast<void*> (int64_t(addedOutputIndex)), bindOutput);
 	}
 
 	outputs = newOutputs;
@@ -192,12 +192,12 @@ void RegistryDelegate::updateOutputs ()
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
-wl_global* RegistryDelegate::registerGlobal (wl_proxy* proxy, const wl_interface* interface, int version, void* data, wl_global_bind_func_t bindFunction)
+wl_global* RegistryDelegate::registerGlobal (wl_proxy* proxy, const wl_interface* interface, int maxVersion, void* data, wl_global_bind_func_t bindFunction)
 {
 	if(proxy == nullptr)
 		return nullptr;
 
-	return registerGlobal (wl_proxy_get_id (proxy), interface, version, data, bindFunction);
+	return registerGlobal (wl_proxy_get_id (proxy), interface, std::min<int> (maxVersion, wl_proxy_get_version (proxy)), data, bindFunction);
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
@@ -261,7 +261,7 @@ void RegistryDelegate::bind (WaylandResource* implementation, wl_client* client,
 
 void RegistryDelegate::bindWaylandCompositor (wl_client* client, void* data, uint32_t version, uint32_t id)
 {
-	uint32_t selectedVersion = std::min<uint32_t> (CompositorDelegate::kMinVersion, version);
+	uint32_t selectedVersion = std::min<uint32_t> (CompositorDelegate::kMaxVersion, version);
 
 	if(selectedVersion < CompositorDelegate::kMinVersion)
 	{
@@ -277,7 +277,7 @@ void RegistryDelegate::bindWaylandCompositor (wl_client* client, void* data, uin
 
 void RegistryDelegate::bindSubCompositor (wl_client* client, void* data, uint32_t version, uint32_t id)
 {
-	uint32_t selectedVersion = std::min<uint32_t> (SubCompositorDelegate::kMinVersion, version);
+	uint32_t selectedVersion = std::min<uint32_t> (SubCompositorDelegate::kMaxVersion, version);
 
 	if(selectedVersion < SubCompositorDelegate::kMinVersion)
 	{
@@ -293,7 +293,7 @@ void RegistryDelegate::bindSubCompositor (wl_client* client, void* data, uint32_
 
 void RegistryDelegate::bindSharedMemory (wl_client* client, void* data, uint32_t version, uint32_t id)
 {
-	uint32_t selectedVersion = std::min<uint32_t> (SharedMemoryDelegate::kMinVersion, version);
+	uint32_t selectedVersion = std::min<uint32_t> (SharedMemoryDelegate::kMaxVersion, version);
 
 	if(selectedVersion < SharedMemoryDelegate::kMinVersion)
 	{
@@ -309,7 +309,7 @@ void RegistryDelegate::bindSharedMemory (wl_client* client, void* data, uint32_t
 
 void RegistryDelegate::bindSeat (wl_client* client, void* data, uint32_t version, uint32_t id)
 {
-	uint32_t selectedVersion = std::min<uint32_t> (SeatDelegate::kMinVersion, version);
+	uint32_t selectedVersion = std::min<uint32_t> (SeatDelegate::kMaxVersion, version);
 
 	if(selectedVersion < SeatDelegate::kMinVersion)
 	{
@@ -327,7 +327,7 @@ void RegistryDelegate::bindSeat (wl_client* client, void* data, uint32_t version
 
 void RegistryDelegate::bindDmaBuffer (wl_client* client, void* data, uint32_t version, uint32_t id)
 {
-	uint32_t selectedVersion = std::min<uint32_t> (DmaBufferDelegate::kMinVersion, version);
+	uint32_t selectedVersion = std::min<uint32_t> (DmaBufferDelegate::kMaxVersion, version);
 
 	if(selectedVersion < DmaBufferDelegate::kMinVersion)
 	{
@@ -343,11 +343,11 @@ void RegistryDelegate::bindDmaBuffer (wl_client* client, void* data, uint32_t ve
 
 void RegistryDelegate::bindOutput (wl_client* client, void* data, uint32_t version, uint32_t id)
 {
-	uint32_t selectedVersion = std::min<uint32_t> (3, version);
+	uint32_t selectedVersion = std::min<uint32_t> (OutputDelegate::kMaxVersion, version);
 
-	if(selectedVersion < 3)
+	if(selectedVersion < OutputDelegate::kMinVersion)
 	{
-		sendInvalidVersion (client, wl_output_interface.name, 3);
+		sendInvalidVersion (client, wl_output_interface.name, OutputDelegate::kMinVersion);
 		return;
 	}
 	
@@ -361,7 +361,7 @@ void RegistryDelegate::bindOutput (wl_client* client, void* data, uint32_t versi
 
 void RegistryDelegate::bindXdgWindowManager (wl_client* client, void* data, uint32_t version, uint32_t id)
 {
-	uint32_t selectedVersion = std::min<uint32_t> (XdgWindowManagerDelegate::kMinVersion, version);
+	uint32_t selectedVersion = std::min<uint32_t> (XdgWindowManagerDelegate::kMaxVersion, version);
 
 	if(selectedVersion < XdgWindowManagerDelegate::kMinVersion)
 	{

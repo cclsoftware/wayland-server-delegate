@@ -59,6 +59,7 @@ public:
 	DmaBufferDelegate ();
 
 	static const int kMinVersion = 4;
+	static const int kMaxVersion = 5;
 
 	// interface
 	static void onDestroy (wl_client* client, wl_resource* resource);
