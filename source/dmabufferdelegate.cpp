@@ -39,6 +39,8 @@
 
 #include "wayland-server-delegate/iwaylandclientcontext.h"
 
+#include <unistd.h>
+
 using namespace WaylandServerDelegate;
 
 //************************************************************************************************
@@ -64,7 +66,7 @@ DmaBufferDelegate::DmaBufferDelegate ()
 
 void DmaBufferDelegate::onDestroy (wl_client* client, wl_resource* resource)
 {
-	WaylandResource::onDestroy (resource);
+	wl_resource_destroy (resource);
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
@@ -152,7 +154,7 @@ DmaBufferParamsDelegate::~DmaBufferParamsDelegate ()
 
 void DmaBufferParamsDelegate::onDestroy (wl_client* client, wl_resource* resource)
 {
-	WaylandResource::onDestroy (resource);
+	wl_resource_destroy (resource);
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
@@ -162,6 +164,7 @@ void DmaBufferParamsDelegate::onAdd (wl_client* client, wl_resource* resource, i
 	DmaBufferParamsDelegate* This = cast<DmaBufferParamsDelegate> (resource);
 	if(This->bufferParams)
 		zwp_linux_buffer_params_v1_add (This->bufferParams, fd, planeIndex, offset, stride, high, low);
+	::close (fd);
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
@@ -251,7 +254,7 @@ DmaBufferFeedbackDelegate::~DmaBufferFeedbackDelegate ()
 
 void DmaBufferFeedbackDelegate::onDestroy (wl_client* client, wl_resource* resource)
 {
-	WaylandResource::onDestroy (resource);
+	wl_resource_destroy (resource);
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
@@ -268,6 +271,7 @@ void DmaBufferFeedbackDelegate::onFormatTable (void* data, zwp_linux_dmabuf_feed
 {
 	DmaBufferFeedbackDelegate* This = static_cast<DmaBufferFeedbackDelegate*> (data);
 	zwp_linux_dmabuf_feedback_v1_send_format_table (This->resourceHandle, fd, size);
+	::close (fd);
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////

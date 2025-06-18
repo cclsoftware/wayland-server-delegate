@@ -87,7 +87,7 @@ public:
 	WaylandResource* findClientResource (wl_client* client, wl_proxy* proxy);
 
 	int openClientConnectionFd ();
-	void closClientConnectionFd (int fd);
+	void closeClientConnectionFd (int fd);
 	const std::vector<ClientConnection>& getConnections () const { return connections; }
 
 	// IWaylandServer

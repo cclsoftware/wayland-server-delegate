@@ -79,7 +79,7 @@ XdgSurfaceDelegate::~XdgSurfaceDelegate ()
 
 void XdgSurfaceDelegate::onDestroy (wl_client* client, wl_resource* resource)
 {
-	WaylandResource::onDestroy (resource);
+	wl_resource_destroy (resource);
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
@@ -180,7 +180,7 @@ XdgPopupDelegate::~XdgPopupDelegate ()
 
 void XdgPopupDelegate::onDestroy (wl_client* client, wl_resource* resource)
 {
-	WaylandResource::onDestroy (resource);
+	wl_resource_destroy (resource);
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
@@ -276,7 +276,7 @@ XdgToplevelDelegate::~XdgToplevelDelegate ()
 
 void XdgToplevelDelegate::onDestroy (wl_client* client, wl_resource* resource)
 {
-	WaylandResource::onDestroy (resource);
+	wl_resource_destroy (resource);
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
@@ -465,7 +465,7 @@ XdgPositionerDelegate::~XdgPositionerDelegate ()
 
 void XdgPositionerDelegate::onDestroy (wl_client* client, wl_resource* resource)
 {
-	WaylandResource::onDestroy (resource);
+	wl_resource_destroy (resource);
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////

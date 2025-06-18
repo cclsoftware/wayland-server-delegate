@@ -39,6 +39,8 @@
 #include "surfacedelegate.h"
 #include "waylandserver.h"
 
+#include <unistd.h>
+
 using namespace WaylandServerDelegate;
 
 //************************************************************************************************
@@ -84,7 +86,7 @@ PointerDelegate::~PointerDelegate ()
 
 void PointerDelegate::onRelease (wl_client* client, wl_resource* resource)
 {
-	WaylandResource::onDestroy (resource);
+	wl_resource_destroy (resource);
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
@@ -226,7 +228,7 @@ KeyboardDelegate::~KeyboardDelegate ()
 
 void KeyboardDelegate::onRelease (wl_client* client, wl_resource* resource)
 {
-	WaylandResource::onDestroy (resource);
+	wl_resource_destroy (resource);
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
@@ -235,6 +237,7 @@ void KeyboardDelegate::onKeymapReceived (void* data, wl_keyboard* keyboard, uint
 {
 	KeyboardDelegate* This = static_cast<KeyboardDelegate*> (data);
 	wl_keyboard_send_keymap (This->getResourceHandle (), format, fd, size);
+	::close (fd);
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
@@ -320,7 +323,7 @@ TouchDelegate::~TouchDelegate ()
 
 void TouchDelegate::onRelease (wl_client* client, wl_resource* resource)
 {
-	WaylandResource::onDestroy (resource);
+	wl_resource_destroy (resource);
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////

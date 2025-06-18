@@ -45,6 +45,7 @@
 #include "wayland-server-delegate/iwaylandclientcontext.h"
 
 #include <algorithm>
+#include <unistd.h>
 
 using namespace WaylandServerDelegate;
 
@@ -449,7 +450,7 @@ SubCompositorDelegate::SubCompositorDelegate ()
 
 void SubCompositorDelegate::onDestroy (wl_client* client, wl_resource* resource)
 {
-	WaylandResource::onDestroy (resource);
+	wl_resource_destroy (resource);
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
@@ -523,6 +524,8 @@ void SharedMemoryDelegate::createPool (wl_client* client, wl_resource* resource,
 
 	WaylandResource* implementation = new SharedMemoryPoolDelegate (pool);
 	connection->addResource (implementation, id);
+
+	::close (fd);
 }
 
 //************************************************************************************************
@@ -564,7 +567,7 @@ void SeatDelegate::sendName () const
 
 void SeatDelegate::onRelease (wl_client* client, wl_resource* resource)
 {
-	WaylandResource::onDestroy (resource);
+	wl_resource_destroy (resource);
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
@@ -650,8 +653,8 @@ void OutputDelegate::sendProperties () const
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
 void OutputDelegate::onRelease (wl_client* client, wl_resource* resource)
-{ 
-	WaylandResource::onDestroy (resource);
+{
+	wl_resource_destroy (resource);
 }
 
 //************************************************************************************************
@@ -685,7 +688,7 @@ void XdgWindowManagerDelegate::sendPing ()
 
 void XdgWindowManagerDelegate::onDestroy (wl_client* client, wl_resource* resource)
 {
-	WaylandResource::onDestroy (resource);
+	wl_resource_destroy (resource);
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////

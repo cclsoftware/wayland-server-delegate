@@ -68,5 +68,5 @@ void CallbackDelegate::onDone (void* data, wl_callback* callback, uint32_t callb
 {
 	CallbackDelegate* This = static_cast<CallbackDelegate*> (data);
 	wl_callback_send_done (This->resourceHandle, callbackData);
-	WaylandResource::onDestroy (This->getResourceHandle ());
+	wl_resource_destroy (This->resourceHandle);
 }

@@ -92,7 +92,7 @@ SurfaceDelegate::~SurfaceDelegate ()
 
 void SurfaceDelegate::onDestroy (wl_client* client, wl_resource* resource)
 {
-	WaylandResource::onDestroy (resource);
+	wl_resource_destroy (resource);
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
@@ -288,7 +288,7 @@ SubSurfaceDelegate::~SubSurfaceDelegate ()
 
 void SubSurfaceDelegate::onDestroy (wl_client* client, wl_resource* resource)
 {
-	WaylandResource::onDestroy (resource);
+	wl_resource_destroy (resource);
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////

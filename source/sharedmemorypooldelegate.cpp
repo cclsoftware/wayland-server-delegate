@@ -68,7 +68,7 @@ SharedMemoryPoolDelegate::~SharedMemoryPoolDelegate ()
 
 void SharedMemoryPoolDelegate::onDestroy (wl_client* client, wl_resource* resource)
 {
-	WaylandResource::onDestroy (resource);
+	wl_resource_destroy (resource);
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
