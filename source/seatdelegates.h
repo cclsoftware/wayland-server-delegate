@@ -68,6 +68,7 @@ public:
 	static void onPointerAxisStop (void* data, wl_pointer* pointer, uint32_t time, uint32_t axis);
 	static void onPointerAxisDiscrete (void* data, wl_pointer* pointer, uint32_t axis, int32_t discrete);
 	static void onPointerAxis120 (void* data, wl_pointer* pointer, uint32_t axis, int32_t discrete);
+	static void onPointerAxisRelativeDirection (void* data, wl_pointer* pointer, uint32_t axis, uint32_t direction);
 	static void onPointerFrame (void* data, wl_pointer* pointer);
 
 private:

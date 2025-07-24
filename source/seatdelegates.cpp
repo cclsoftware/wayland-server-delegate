@@ -62,6 +62,9 @@ PointerDelegate::PointerDelegate (wl_seat* seat)
 	#ifdef WL_POINTER_AXIS_VALUE120_SINCE_VERSION
 	axis_value120 = onPointerAxis120;
 	#endif
+	#ifdef WL_POINTER_AXIS_RELATIVE_DIRECTION_SINCE_VERSION
+	axis_relative_direction = onPointerAxisRelativeDirection;
+	#endif
 	frame = onPointerFrame;
 
 	set_cursor = setCursor;
@@ -186,6 +189,17 @@ void PointerDelegate::onPointerAxis120 (void* data, wl_pointer* pointer, uint32_
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
+void PointerDelegate::onPointerAxisRelativeDirection (void* data, wl_pointer* pointer, uint32_t axis, uint32_t direction)
+{
+	#ifdef WL_POINTER_AXIS_RELATIVE_DIRECTION_SINCE_VERSION
+	PointerDelegate* This = static_cast<PointerDelegate*> (data);
+	if(wl_resource_get_version (This->getResourceHandle ()) >= WL_POINTER_AXIS_RELATIVE_DIRECTION_SINCE_VERSION)
+		wl_pointer_send_axis_relative_direction (This->getResourceHandle (), axis, direction);
+	#endif
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////////////
+
 void PointerDelegate::onPointerFrame (void* data, wl_pointer* pointer)
 {
 	PointerDelegate* This = static_cast<PointerDelegate*> (data);
@@ -267,6 +281,13 @@ void KeyboardDelegate::onKeyboardFocusLeave (void* data, wl_keyboard* keyboard, 
 void KeyboardDelegate::onKey (void* data, wl_keyboard* keyboard, uint32_t serial, uint32_t time, uint32_t key, uint32_t state)
 {
 	KeyboardDelegate* This = static_cast<KeyboardDelegate*> (data);
+	#ifdef WL_KEYBOARD_KEY_STATE_REPEATED_SINCE_VERSION
+	if(wl_resource_get_version (This->getResourceHandle ()) < WL_KEYBOARD_KEY_STATE_REPEATED_SINCE_VERSION)
+	{
+		if(state == WL_KEYBOARD_KEY_STATE_REPEATED)
+			state = WL_KEYBOARD_KEY_STATE_PRESSED;
+	}
+	#endif
 	wl_keyboard_send_key (This->getResourceHandle (), serial, time, key, state);
 }
 
