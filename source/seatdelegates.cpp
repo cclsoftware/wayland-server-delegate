@@ -176,8 +176,8 @@ void PointerDelegate::onPointerAxisDiscrete (void* data, wl_pointer* pointer, ui
 
 void PointerDelegate::onPointerAxis120 (void* data, wl_pointer* pointer, uint32_t axis, int32_t discrete)
 {
-	#ifdef WL_POINTER_AXIS_VALUE120_SINCE_VERSION
 	PointerDelegate* This = static_cast<PointerDelegate*> (data);
+	#ifdef WL_POINTER_AXIS_VALUE120_SINCE_VERSION
 	if(wl_resource_get_version (This->getResourceHandle ()) >= WL_POINTER_AXIS_VALUE120_SINCE_VERSION)
 		wl_pointer_send_axis_value120 (This->getResourceHandle (), axis, discrete);
 	else
