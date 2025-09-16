@@ -64,6 +64,26 @@ DmaBufferDelegate::DmaBufferDelegate ()
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
+void DmaBufferDelegate::sendModifiers (wl_display* display)
+{
+	if(wl_resource_get_version (resourceHandle) >= ZWP_LINUX_DMABUF_V1_GET_DEFAULT_FEEDBACK_SINCE_VERSION)
+		return;
+
+	IWaylandClientContext* context = WaylandServer::instance ().getContext ();
+	for(int i = 0; context && i < context->countDmaBufferModifiers (); i++)
+	{
+		uint32_t format = 0;
+		uint32_t modifierHigh = 0;
+		uint32_t modifierLow = 0;
+		if(!context->getDmaBufferModifier (format, modifierHigh, modifierLow, i))
+			continue;
+
+		zwp_linux_dmabuf_v1_send_modifier (resourceHandle, format, modifierHigh, modifierLow);
+	}
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////////////
+
 void DmaBufferDelegate::onDestroy (wl_client* client, wl_resource* resource)
 {
 	wl_resource_destroy (resource);

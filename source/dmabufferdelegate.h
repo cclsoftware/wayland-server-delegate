@@ -58,15 +58,17 @@ class DmaBufferDelegate: public WaylandResource,
 public:
 	DmaBufferDelegate ();
 
-	static const int kMinVersion = 4;
+	static const int kMinVersion = ZWP_LINUX_DMABUF_V1_MODIFIER_SINCE_VERSION;
 	static const int kMaxVersion = 5;
+
+	void sendModifiers (wl_display* display);
 
 	// interface
 	static void onDestroy (wl_client* client, wl_resource* resource);
 	static void createParams (wl_client* client, wl_resource* resource, uint32_t id);
 	static void getDefaultFeedback (wl_client* client, wl_resource* resource, uint32_t id);
 	static void getSurfaceFeedback (wl_client* client, wl_resource* resource, uint32_t id, wl_resource* surface);
-
+	
 	// listener
 	// not implemented: all events are deprecated in version 4
 

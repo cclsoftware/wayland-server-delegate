@@ -110,6 +110,10 @@ struct IWaylandClientContext
 
 	virtual int countOutputs () const = 0;
 	virtual const WaylandOutput& getOutput (int index) const = 0;
+
+	virtual int countDmaBufferModifiers () const = 0;
+	virtual bool getDmaBufferModifier (uint32_t& format, uint32_t& modifierHigh, uint32_t& modifierLow, int index) const = 0;
+
 };
 
 } // namespace WaylandServerDelegate

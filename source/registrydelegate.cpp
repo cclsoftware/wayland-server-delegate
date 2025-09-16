@@ -338,6 +338,7 @@ void RegistryDelegate::bindDmaBuffer (wl_client* client, void* data, uint32_t ve
 	
 	DmaBufferDelegate* implementation = new DmaBufferDelegate;
 	instance ().bind (implementation, client, selectedVersion, id);
+	implementation->sendModifiers (WaylandServer::instance ().getDisplay ());
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
