@@ -56,7 +56,7 @@ public:
 
 	// interface
 	static void onRelease (wl_client* client, wl_resource* resource);
-	static void setCursor (wl_client* client, wl_resource *resource, uint32_t serial, wl_resource* surface, int32_t x, int32_t y);
+	static void setCursor (wl_client* client, wl_resource* resource, uint32_t serial, wl_resource* surface, int32_t x, int32_t y);
 
 	// listener
 	static void onPointerEnter (void* data, wl_pointer* pointer, uint32_t serial, wl_surface* surface, wl_fixed_t x, wl_fixed_t y);
@@ -73,6 +73,9 @@ public:
 
 private:
 	wl_pointer* pointer;
+	wl_surface* savedFocus;
+	int32_t offsetX;
+	int32_t offsetY;
 };
 
 //************************************************************************************************

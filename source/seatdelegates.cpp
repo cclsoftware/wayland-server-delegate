@@ -33,11 +33,10 @@
 //
 //************************************************************************************************
 
-#define DEBUG_LOG 0
-
 #include "seatdelegates.h"
 #include "surfacedelegate.h"
 #include "waylandserver.h"
+#include "wayland-server-delegate/iwaylandclientcontext.h"
 
 #include <unistd.h>
 
@@ -49,7 +48,10 @@ using namespace WaylandServerDelegate;
 
 PointerDelegate::PointerDelegate (wl_seat* seat)
 : WaylandResource (&::wl_pointer_interface, static_cast<wl_pointer_interface*> (this)),
-  pointer (nullptr)
+  pointer (nullptr),
+  savedFocus (nullptr),
+  offsetX (0),
+  offsetY (0)
 {
 	enter = onPointerEnter;
 	leave = onPointerLeave;
@@ -108,9 +110,27 @@ void PointerDelegate::onPointerEnter (void* data, wl_pointer* pointer, uint32_t 
 {
 	PointerDelegate* This = static_cast<PointerDelegate*> (data);
 	WaylandServer& server = WaylandServer::instance ();
-	WaylandResource* resource = server.findClientResource (This->clientHandle, reinterpret_cast<wl_proxy*> (surface));
+	WaylandServer::ClientConnection* connection = server.findClientConnection (This->clientHandle);
+	if(connection == nullptr)
+		return;
+	WaylandResource* resource = connection->findResource (reinterpret_cast<wl_proxy*> (surface));
 	if(resource)
+	{
+		This->offsetX = 0;
+		This->offsetY = 0;
 		wl_pointer_send_enter (This->getResourceHandle (), serial, resource->getResourceHandle (), x, y);
+	}
+	else if(This->savedFocus && This->savedFocus != surface)
+	{
+		if(resource = connection->findResource (reinterpret_cast<wl_proxy*> (This->savedFocus)))
+		{
+			IWaylandClientContext* context = server.getContext ();
+			bool succeeded = context ? context->getSubSurfaceOffset (This->offsetX, This->offsetY, connection->clientDisplay, surface, This->savedFocus) : false;
+			if(succeeded)
+				wl_pointer_send_enter (This->getResourceHandle (), serial, resource->getResourceHandle (), x - This->offsetX, y - This->offsetY);
+		}
+		This->savedFocus = nullptr;
+	}
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
@@ -121,7 +141,10 @@ void PointerDelegate::onPointerLeave (void* data, wl_pointer* pointer, uint32_t 
 	WaylandServer& server = WaylandServer::instance ();
 	WaylandResource* resource = server.findClientResource (This->clientHandle, reinterpret_cast<wl_proxy*> (surface));
 	if(resource)
+	{
 		wl_pointer_send_leave (This->getResourceHandle (), serial, resource->getResourceHandle ());
+		This->savedFocus = surface;
+	}
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
@@ -129,7 +152,7 @@ void PointerDelegate::onPointerLeave (void* data, wl_pointer* pointer, uint32_t 
 void PointerDelegate::onPointerMotion (void* data, wl_pointer* pointer, uint32_t time, wl_fixed_t x, wl_fixed_t y)
 {
 	PointerDelegate* This = static_cast<PointerDelegate*> (data);
-	wl_pointer_send_motion (This->getResourceHandle (), time, x, y);
+	wl_pointer_send_motion (This->getResourceHandle (), time, x - This->offsetX, y - This->offsetY);
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////

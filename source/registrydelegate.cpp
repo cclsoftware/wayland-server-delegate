@@ -71,12 +71,12 @@ void RegistryDelegate::startup ()
 	const WaylandServer& server = WaylandServer::instance ();
 	IWaylandClientContext* context = server.getContext ();
 
-	registerGlobal (reinterpret_cast<wl_proxy*> (context->getCompositor ()), &wl_compositor_interface, CompositorDelegate::kMaxVersion, nullptr, bindWaylandCompositor);
-	registerGlobal (reinterpret_cast<wl_proxy*> (context->getSubCompositor ()), &wl_subcompositor_interface, SubCompositorDelegate::kMaxVersion, nullptr, bindSubCompositor);
-	registerGlobal (reinterpret_cast<wl_proxy*> (context->getSharedMemory ()), &wl_shm_interface, SharedMemoryDelegate::kMaxVersion, nullptr, bindSharedMemory);
-	registerGlobal (reinterpret_cast<wl_proxy*> (context->getWindowManager ()), &xdg_wm_base_interface, XdgWindowManagerDelegate::kMaxVersion, nullptr, bindXdgWindowManager);
-	registerGlobal (reinterpret_cast<wl_proxy*> (context->getSeat ()), &wl_seat_interface, SeatDelegate::kMaxVersion, nullptr, bindSeat);
-	registerGlobal (reinterpret_cast<wl_proxy*> (context->getDmaBuffer ()), &zwp_linux_dmabuf_v1_interface, DmaBufferDelegate::kMaxVersion, nullptr, bindDmaBuffer);
+	registerGlobal (reinterpret_cast<wl_proxy*> (context->getCompositor ()), &wl_compositor_interface, CompositorDelegate::kMaxVersion, nullptr, bind<CompositorDelegate>);
+	registerGlobal (reinterpret_cast<wl_proxy*> (context->getSubCompositor ()), &wl_subcompositor_interface, SubCompositorDelegate::kMaxVersion, nullptr, bind<SubCompositorDelegate>);
+	registerGlobal (reinterpret_cast<wl_proxy*> (context->getSharedMemory ()), &wl_shm_interface, SharedMemoryDelegate::kMaxVersion, nullptr, bind<SharedMemoryDelegate>);
+	registerGlobal (reinterpret_cast<wl_proxy*> (context->getWindowManager ()), &xdg_wm_base_interface, XdgWindowManagerDelegate::kMaxVersion, nullptr, bind<XdgWindowManagerDelegate>);
+	registerGlobal (reinterpret_cast<wl_proxy*> (context->getSeat ()), &wl_seat_interface, SeatDelegate::kMaxVersion, nullptr, bind<SeatDelegate>);
+	registerGlobal (reinterpret_cast<wl_proxy*> (context->getDmaBuffer ()), &zwp_linux_dmabuf_v1_interface, DmaBufferDelegate::kMaxVersion, nullptr, bind<DmaBufferDelegate>);
 	
 	updateOutputs ();
 
@@ -170,7 +170,7 @@ void RegistryDelegate::updateOutputs ()
 	{
 		wl_proxy* proxy = reinterpret_cast<wl_proxy*> (context->getOutput (addedOutputIndex).handle);
 		uint32_t id = wl_proxy_get_id (proxy);
-		registerGlobal (id, &wl_output_interface, OutputDelegate::kMaxVersion, reinterpret_cast<void*> (int64_t(addedOutputIndex)), bindOutput);
+		registerGlobal (id, &wl_output_interface, OutputDelegate::kMaxVersion, reinterpret_cast<void*> (int64_t(addedOutputIndex)), bind<OutputDelegate>);
 	}
 
 	outputs = newOutputs;
@@ -260,118 +260,18 @@ void RegistryDelegate::bind (WaylandResource* implementation, wl_client* client,
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
-void RegistryDelegate::bindWaylandCompositor (wl_client* client, void* data, uint32_t version, uint32_t id)
+template<class T> 
+void RegistryDelegate::bind (wl_client* client, void* data, uint32_t version, uint32_t id)
 {
-	uint32_t selectedVersion = std::min<uint32_t> (CompositorDelegate::kMaxVersion, version);
+	uint32_t selectedVersion = std::min<uint32_t> (T::kMaxVersion, version);
 
-	if(selectedVersion < CompositorDelegate::kMinVersion)
+	if(selectedVersion < T::kMinVersion)
 	{
-		sendInvalidVersion (client, wl_compositor_interface.name, CompositorDelegate::kMinVersion);
+		sendInvalidVersion (client, wl_compositor_interface.name, T::kMinVersion);
 		return;
 	}
 	
-	WaylandResource* implementation = new CompositorDelegate;
-	instance ().bind (implementation, client, selectedVersion, id);
-}
-
-//////////////////////////////////////////////////////////////////////////////////////////////////
-
-void RegistryDelegate::bindSubCompositor (wl_client* client, void* data, uint32_t version, uint32_t id)
-{
-	uint32_t selectedVersion = std::min<uint32_t> (SubCompositorDelegate::kMaxVersion, version);
-
-	if(selectedVersion < SubCompositorDelegate::kMinVersion)
-	{
-		sendInvalidVersion (client, wl_subcompositor_interface.name, SubCompositorDelegate::kMinVersion);
-		return;
-	}
-	
-	WaylandResource* implementation = new SubCompositorDelegate;
-	instance ().bind (implementation, client, selectedVersion, id);
-}
-
-//////////////////////////////////////////////////////////////////////////////////////////////////
-
-void RegistryDelegate::bindSharedMemory (wl_client* client, void* data, uint32_t version, uint32_t id)
-{
-	uint32_t selectedVersion = std::min<uint32_t> (SharedMemoryDelegate::kMaxVersion, version);
-
-	if(selectedVersion < SharedMemoryDelegate::kMinVersion)
-	{
-		sendInvalidVersion (client, wl_shm_interface.name, SharedMemoryDelegate::kMinVersion);
-		return;
-	}
-	
-	WaylandResource* implementation = new SharedMemoryDelegate;
-	instance ().bind (implementation, client, selectedVersion, id);
-}
-
-//////////////////////////////////////////////////////////////////////////////////////////////////
-
-void RegistryDelegate::bindSeat (wl_client* client, void* data, uint32_t version, uint32_t id)
-{
-	uint32_t selectedVersion = std::min<uint32_t> (SeatDelegate::kMaxVersion, version);
-
-	if(selectedVersion < SeatDelegate::kMinVersion)
-	{
-		sendInvalidVersion (client, wl_seat_interface.name, SeatDelegate::kMinVersion);
-		return;
-	}
-	
-	SeatDelegate* implementation = new SeatDelegate;
-	instance ().bind (implementation, client, selectedVersion, id);
-	implementation->sendCapabilities ();
-	implementation->sendName ();
-}
-
-//////////////////////////////////////////////////////////////////////////////////////////////////
-
-void RegistryDelegate::bindDmaBuffer (wl_client* client, void* data, uint32_t version, uint32_t id)
-{
-	uint32_t selectedVersion = std::min<uint32_t> (DmaBufferDelegate::kMaxVersion, version);
-
-	if(selectedVersion < DmaBufferDelegate::kMinVersion)
-	{
-		sendInvalidVersion (client, zwp_linux_dmabuf_v1_interface.name, DmaBufferDelegate::kMinVersion);
-		return;
-	}
-	
-	DmaBufferDelegate* implementation = new DmaBufferDelegate;
-	instance ().bind (implementation, client, selectedVersion, id);
-	implementation->sendModifiers (WaylandServer::instance ().getDisplay ());
-}
-
-//////////////////////////////////////////////////////////////////////////////////////////////////
-
-void RegistryDelegate::bindOutput (wl_client* client, void* data, uint32_t version, uint32_t id)
-{
-	uint32_t selectedVersion = std::min<uint32_t> (OutputDelegate::kMaxVersion, version);
-
-	if(selectedVersion < OutputDelegate::kMinVersion)
-	{
-		sendInvalidVersion (client, wl_output_interface.name, OutputDelegate::kMinVersion);
-		return;
-	}
-	
-	int64_t index = reinterpret_cast<int64_t> (data);
-	OutputDelegate* implementation = new OutputDelegate (int (index));
-	instance ().bind (implementation, client, selectedVersion, id);
-	implementation->sendProperties ();
-}
-
-//////////////////////////////////////////////////////////////////////////////////////////////////
-
-void RegistryDelegate::bindXdgWindowManager (wl_client* client, void* data, uint32_t version, uint32_t id)
-{
-	uint32_t selectedVersion = std::min<uint32_t> (XdgWindowManagerDelegate::kMaxVersion, version);
-
-	if(selectedVersion < XdgWindowManagerDelegate::kMinVersion)
-	{
-		sendInvalidVersion (client, xdg_wm_base_interface.name, XdgWindowManagerDelegate::kMinVersion);
-		return;
-	}
-	
-	WaylandResource* implementation = new XdgWindowManagerDelegate;
+	WaylandResource* implementation = new T;
 	instance ().bind (implementation, client, selectedVersion, id);
 }
 
@@ -550,6 +450,14 @@ SeatDelegate::SeatDelegate ()
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
+void SeatDelegate::initialize ()
+{
+	sendCapabilities ();
+	sendName ();
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////////////
+
 void SeatDelegate::sendCapabilities () const
 {
 	IWaylandClientContext* context = WaylandServer::instance ().getContext ();
@@ -635,6 +543,13 @@ OutputDelegate::OutputDelegate (int index)
 	outputHandle = output.handle;
 
 	setProxy (reinterpret_cast<wl_proxy*> (outputHandle));
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////////////
+
+void OutputDelegate::initialize ()
+{
+	sendProperties ();
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////

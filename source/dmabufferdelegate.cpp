@@ -64,7 +64,14 @@ DmaBufferDelegate::DmaBufferDelegate ()
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
-void DmaBufferDelegate::sendModifiers (wl_display* display)
+void DmaBufferDelegate::initialize () 
+{
+	sendModifiers ();
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////////////
+
+void DmaBufferDelegate::sendModifiers ()
 {
 	if(wl_resource_get_version (resourceHandle) >= ZWP_LINUX_DMABUF_V1_GET_DEFAULT_FEEDBACK_SINCE_VERSION)
 		return;

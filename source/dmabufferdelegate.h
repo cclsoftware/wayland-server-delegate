@@ -61,7 +61,10 @@ public:
 	static const int kMinVersion = ZWP_LINUX_DMABUF_V1_MODIFIER_SINCE_VERSION;
 	static const int kMaxVersion = 5;
 
-	void sendModifiers (wl_display* display);
+	void sendModifiers ();
+	
+	// WaylandResource
+	void initialize () override;
 
 	// interface
 	static void onDestroy (wl_client* client, wl_resource* resource);

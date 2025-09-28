@@ -80,13 +80,7 @@ public:
 	void shutdown ();
 
 	void bind (WaylandResource* implementation, wl_client* client, uint32_t version, uint32_t id);
-	static void bindWaylandCompositor (wl_client* client, void* data, uint32_t version, uint32_t id);
-	static void bindSubCompositor (wl_client* client, void* data, uint32_t version, uint32_t id);
-	static void bindSharedMemory (wl_client* client, void* data, uint32_t version, uint32_t id);
-	static void bindSeat (wl_client* client, void* data, uint32_t version, uint32_t id);
-	static void bindDmaBuffer (wl_client* client, void* data, uint32_t version, uint32_t id);
-	static void bindOutput (wl_client* client, void* data, uint32_t version, uint32_t id);
-	static void bindXdgWindowManager (wl_client* client, void* data, uint32_t version, uint32_t id);
+	template<class T> static void bind (wl_client* client, void* data, uint32_t version, uint32_t id);
 
 	// IContextListener
 	void contextChanged (ChangeType type) override;
@@ -183,6 +177,9 @@ public:
 	void sendCapabilities () const;
 	void sendName () const;
 
+	// WaylandResource
+	void initialize () override;
+
 	// interface
 	static void onRelease (wl_client* client, wl_resource* resource);
 	static void getPointer (wl_client* client, wl_resource* resource, uint32_t id);
@@ -207,6 +204,9 @@ public:
 	static const int kMaxVersion = 3;
 
 	void sendProperties () const;
+
+	// WaylandResource
+	void initialize () override;
 
 	// interface
 	static void onRelease (wl_client* client, wl_resource* resource);

@@ -98,6 +98,9 @@ struct IWaylandClientContext
 	virtual bool addListener (IContextListener* listener) = 0;
 	virtual bool removeListener (IContextListener* listener) = 0;
 
+	/** If \a parentSurface contains the given \a childSurface, return the child surface position relative to the parent in \a x and \a y. */
+	virtual bool getSubSurfaceOffset (int32_t& x, int32_t& y, wl_display* display, wl_surface* parentSurface, wl_surface* childSurface) = 0;
+
 	virtual wl_compositor* getCompositor () const = 0;
 	virtual wl_subcompositor* getSubCompositor () const = 0;
 	virtual wl_shm* getSharedMemory () const = 0;

@@ -52,6 +52,8 @@ public:
 	WaylandResource (const wl_interface* waylandInterface, void* implementation);
 	virtual ~WaylandResource ();
 
+	virtual void initialize () {}
+
 	const wl_interface* getWaylandInterface () const { return waylandInterface; }
 	void* getImplementation () const { return implementation; }
 	wl_resource* getResourceHandle () const { return resourceHandle; }

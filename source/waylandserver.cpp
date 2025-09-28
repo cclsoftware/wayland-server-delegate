@@ -343,6 +343,7 @@ void WaylandServer::ClientConnection::addResource (WaylandResource* implementati
 	implementation->setClientHandle (clientHandle);
 	resources.push_back (implementation);
 	wl_resource_set_implementation (resource, implementation->getImplementation (), implementation, WaylandResource::onDestroy);
+	implementation->initialize ();
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////

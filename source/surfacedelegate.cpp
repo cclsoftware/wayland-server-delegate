@@ -33,8 +33,6 @@
 //
 //************************************************************************************************
 
-#define DEBUG_LOG 0
-
 #include "surfacedelegate.h"
 #include "bufferdelegate.h"
 #include "regiondelegate.h"
